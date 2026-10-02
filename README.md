@@ -56,8 +56,8 @@ cp .env.example .env
 task docker:dev
 ```
 
-Ça build et lance l'API (avec hot-reload via `air`) et une base PostgreSQL. L'API
-est disponible sur `http://localhost:8080`.
+Ça build et lance l'API (avec hot-reload via `air`), une base PostgreSQL et un Adminer. L'API
+est disponible sur `http://localhost:8080` et Adminer sur `http://localhost:8081`.
 
 ### Migrations
 
