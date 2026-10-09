@@ -1,5 +1,7 @@
 package publication
+
 import "time"
+
 type Publication struct {
 	ID          string
 	UserID      string

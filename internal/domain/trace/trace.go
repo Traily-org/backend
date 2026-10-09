@@ -1,5 +1,7 @@
 package trace
+
 import "time"
+
 type Trace struct {
 	ID          string
 	UserID      string

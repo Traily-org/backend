@@ -1,5 +1,7 @@
 package poi
+
 import "time"
+
 type POI struct {
 	ID          string
 	UserID      *string

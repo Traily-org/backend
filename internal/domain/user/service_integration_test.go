@@ -21,7 +21,7 @@ func newTestService(t *testing.T) *user.Service {
 
 	ctx := context.Background()
 
-	container, err := tcpostgres.Run(ctx, "postgres:16-alpine",
+	container, err := tcpostgres.Run(ctx, "postgis/postgis:16-3.4-alpine",
 		tcpostgres.WithDatabase("traily"),
 		tcpostgres.WithUsername("traily"),
 		tcpostgres.WithPassword("traily"),

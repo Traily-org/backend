@@ -1,5 +1,7 @@
 package herbier
+
 import "time"
+
 type Herbier struct {
 	ID        string
 	UserID    string

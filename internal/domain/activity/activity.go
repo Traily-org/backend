@@ -1,5 +1,7 @@
 package activity
+
 import "time"
+
 type Activity struct {
 	ID        string
 	UserID    string

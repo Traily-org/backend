@@ -102,10 +102,3 @@ func NewTrackResponse(t track.Track) TrackResponse {
 	}
 }
 
-// Generic DTOs for Trace, Activity, Publication, POI, Herbier, PlantSpecies, HerbierEntry
-// These are minimal implementations - expand as needed
-type entityResponse struct {
-	ID        string      `json:"id"`
-	Data      interface{} `json:"data,omitempty"`
-	CreatedAt time.Time   `json:"created_at"`
-}
