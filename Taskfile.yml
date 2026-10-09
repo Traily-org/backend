@@ -19,11 +19,12 @@ tasks:
       - go test ./...
 
   test:integration:
-    desc: run integration tests (requires Docker running)
-    env:
-      CGO_ENABLED: 0
+    desc: run integration tests with Docker
     cmds:
-      - go test -tags=integration ./...
+      - defer: docker compose down
+      - docker compose up -d db
+      - sleep 10
+      - go test -tags=integration -timeout=300s ./internal/domain/... -v
 
   migrate:
     desc: run pending DB migrations manually
