@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	nethttp "net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/traily-org/server/internal/adapters/http/dto"
 	"github.com/traily-org/server/internal/domain/track"
 )
 
@@ -33,7 +35,7 @@ func (h *TrackHandler) Get(ctx *gin.Context) {
 		ctx.JSON(nethttp.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(nethttp.StatusOK, newTrackResponse(t))
+	ctx.JSON(nethttp.StatusOK, dto.NewTrackResponse(t))
 }
 
 func (h *TrackHandler) ListByUser(ctx *gin.Context) {
@@ -49,9 +51,9 @@ func (h *TrackHandler) ListByUser(ctx *gin.Context) {
 		return
 	}
 
-	responses := make([]trackResponse, len(tracks))
+	responses := make([]dto.TrackResponse, len(tracks))
 	for i, t := range tracks {
-		responses[i] = newTrackResponse(t)
+		responses[i] = dto.NewTrackResponse(t)
 	}
 	ctx.JSON(nethttp.StatusOK, responses)
 }
@@ -85,7 +87,7 @@ func (h *TrackHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(nethttp.StatusCreated, newTrackResponse(t))
+	ctx.JSON(nethttp.StatusCreated, dto.NewTrackResponse(t))
 }
 
 func (h *TrackHandler) Update(ctx *gin.Context) {
@@ -120,7 +122,7 @@ func (h *TrackHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(nethttp.StatusOK, newTrackResponse(t))
+	ctx.JSON(nethttp.StatusOK, dto.NewTrackResponse(t))
 }
 
 func (h *TrackHandler) Delete(ctx *gin.Context) {

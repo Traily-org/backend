@@ -35,7 +35,7 @@ func (h *AppUserHandler) Get(ctx *gin.Context) {
 		writeAppUserError(ctx, err)
 		return
 	}
-	ctx.JSON(nethttp.StatusOK, newAppUserResponse(u))
+	ctx.JSON(nethttp.StatusOK, dto.NewAppUserResponse(u))
 }
 
 func (h *AppUserHandler) List(ctx *gin.Context) {
@@ -45,15 +45,15 @@ func (h *AppUserHandler) List(ctx *gin.Context) {
 		return
 	}
 
-	responses := make([]appUserResponse, len(users))
+	responses := make([]dto.AppUserResponse, len(users))
 	for i, u := range users {
-		responses[i] = newAppUserResponse(u)
+		responses[i] = dto.NewAppUserResponse(u)
 	}
 	ctx.JSON(nethttp.StatusOK, responses)
 }
 
 func (h *AppUserHandler) Create(ctx *gin.Context) {
-	var req createAppUserRequest
+	var req dto.CreateAppUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(nethttp.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -70,13 +70,13 @@ func (h *AppUserHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(nethttp.StatusCreated, newAppUserResponse(u))
+	ctx.JSON(nethttp.StatusCreated, dto.NewAppUserResponse(u))
 }
 
 func (h *AppUserHandler) Update(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	var req updateAppUserRequest
+	var req dto.UpdateAppUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(nethttp.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -94,7 +94,7 @@ func (h *AppUserHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(nethttp.StatusOK, newAppUserResponse(u))
+	ctx.JSON(nethttp.StatusOK, dto.NewAppUserResponse(u))
 }
 
 func (h *AppUserHandler) Delete(ctx *gin.Context) {

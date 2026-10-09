@@ -16,10 +16,10 @@ type Server struct {
 	traceHandler        *handlers.TraceHandler
 	activityHandler     *handlers.ActivityHandler
 	publicationHandler  *handlers.PublicationHandler
-	poiHandler          *handlers.POIHandler
+	poiHandler          *handlers.PoiHandler
 	herbierHandler      *handlers.HerbierHandler
-	plantSpeciesHandler *handlers.PlantSpeciesHandler
-	herbierEntryHandler *handlers.HerbierEntryHandler
+	plantSpeciesHandler *handlers.PlantspeciesHandler
+	herbierEntryHandler *handlers.HerbierentryHandler
 }
 
 func NewServer(
@@ -29,10 +29,10 @@ func NewServer(
 	traceHandler *handlers.TraceHandler,
 	activityHandler *handlers.ActivityHandler,
 	publicationHandler *handlers.PublicationHandler,
-	poiHandler *handlers.POIHandler,
+	poiHandler *handlers.PoiHandler,
 	herbierHandler *handlers.HerbierHandler,
-	plantSpeciesHandler *handlers.PlantSpeciesHandler,
-	herbierEntryHandler *handlers.HerbierEntryHandler,
+	plantSpeciesHandler *handlers.PlantspeciesHandler,
+	herbierEntryHandler *handlers.HerbierentryHandler,
 ) *Server {
 	s := &Server{
 		router:              gin.Default(),

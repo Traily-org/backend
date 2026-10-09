@@ -69,7 +69,7 @@ func main() {
 	// POI service
 	poiRepository := postgres.NewPOIRepository(pool)
 	poiService := poi.NewService(poiRepository)
-	poiHandler := handlers.NewPOIHandler(poiService)
+	poiHandler := handlers.NewPoiHandler(poiService)
 
 	// Herbier service
 	herbierRepository := postgres.NewHerbierRepository(pool)
@@ -79,12 +79,12 @@ func main() {
 	// PlantSpecies service
 	plantSpeciesRepository := postgres.NewPlantSpeciesRepository(pool)
 	plantSpeciesService := plantspecies.NewService(plantSpeciesRepository)
-	plantSpeciesHandler := handlers.NewPlantSpeciesHandler(plantSpeciesService)
+	plantSpeciesHandler := handlers.NewPlantspeciesHandler(plantSpeciesService)
 
 	// HerbierEntry service
 	herbierEntryRepository := postgres.NewHerbierEntryRepository(pool)
 	herbierEntryService := herbierentry.NewService(herbierEntryRepository)
-	herbierEntryHandler := handlers.NewHerbierEntryHandler(herbierEntryService)
+	herbierEntryHandler := handlers.NewHerbierentryHandler(herbierEntryService)
 
 	srv := server.NewServer(
 		userHandler,

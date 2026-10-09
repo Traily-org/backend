@@ -5,13 +5,6 @@ import (
 
 	"github.com/traily-org/server/internal/domain/appuser"
 	"github.com/traily-org/server/internal/domain/track"
-	"github.com/traily-org/server/internal/domain/trace"
-	"github.com/traily-org/server/internal/domain/activity"
-	"github.com/traily-org/server/internal/domain/publication"
-	"github.com/traily-org/server/internal/domain/poi"
-	"github.com/traily-org/server/internal/domain/herbier"
-	"github.com/traily-org/server/internal/domain/plantspecies"
-	"github.com/traily-org/server/internal/domain/herbierentry"
 	"github.com/traily-org/server/internal/domain/user"
 )
 
@@ -23,8 +16,8 @@ type UserResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NewUserResponse(u user.User) userResponse {
-	return userResponse{
+func NewUserResponse(u user.User) UserResponse {
+	return UserResponse{
 		ID:        u.ID,
 		Email:     u.Email,
 		Name:      u.Name,

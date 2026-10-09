@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/traily-org/server/internal/adapters/http/dto"
 	"github.com/traily-org/server/internal/domain/user"
 )
 
@@ -34,11 +35,11 @@ func (h *UserHandler) Get(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(nethttp.StatusOK, newUserResponse(u))
+	ctx.JSON(nethttp.StatusOK, dto.NewUserResponse(u))
 }
 
 func (h *UserHandler) Create(ctx *gin.Context) {
-	var req createUserRequest
+	var req dto.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(nethttp.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -54,13 +55,13 @@ func (h *UserHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(nethttp.StatusCreated, newUserResponse(u))
+	ctx.JSON(nethttp.StatusCreated, dto.NewUserResponse(u))
 }
 
 func (h *UserHandler) Update(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	var req updateUserRequest
+	var req dto.UpdateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(nethttp.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -77,7 +78,7 @@ func (h *UserHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(nethttp.StatusOK, newUserResponse(u))
+	ctx.JSON(nethttp.StatusOK, dto.NewUserResponse(u))
 }
 
 func (h *UserHandler) Delete(ctx *gin.Context) {
