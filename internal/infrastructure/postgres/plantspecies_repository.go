@@ -16,16 +16,16 @@ func NewPlantSpeciesRepository(pool *pgxpool.Pool) *PlantSpeciesRepository {
 	return &PlantSpeciesRepository{pool: pool}
 }
 func (r *PlantSpeciesRepository) GetByID(ctx context.Context, id string) (plantspecies.PlantSpecies, error) {
-	row := r.pool.QueryRow(ctx, "SELECT id, common_name, scientific_name, description FROM plant_species WHERE id = $1", id)
+	row := r.pool.QueryRow(ctx, "SELECT id, common_name, scientific_name, description, created_at, updated_at FROM plant_species WHERE id = $1", id)
 	var p plantspecies.PlantSpecies
-	err := row.Scan(&p.ID, &p.CommonName, &p.ScientificName, &p.Description)
+	err := row.Scan(&p.ID, &p.CommonName, &p.ScientificName, &p.Description, &p.CreatedAt, &p.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return plantspecies.PlantSpecies{}, plantspecies.ErrNotFound
 	}
 	return p, err
 }
 func (r *PlantSpeciesRepository) List(ctx context.Context) ([]plantspecies.PlantSpecies, error) {
-	rows, err := r.pool.Query(ctx, "SELECT id, common_name, scientific_name, description FROM plant_species ORDER BY common_name")
+	rows, err := r.pool.Query(ctx, "SELECT id, common_name, scientific_name, description, created_at, updated_at FROM plant_species ORDER BY common_name")
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (r *PlantSpeciesRepository) List(ctx context.Context) ([]plantspecies.Plant
 	var species []plantspecies.PlantSpecies
 	for rows.Next() {
 		var p plantspecies.PlantSpecies
-		if err := rows.Scan(&p.ID, &p.CommonName, &p.ScientificName, &p.Description); err != nil {
+		if err := rows.Scan(&p.ID, &p.CommonName, &p.ScientificName, &p.Description, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
 		species = append(species, p)
@@ -41,13 +41,13 @@ func (r *PlantSpeciesRepository) List(ctx context.Context) ([]plantspecies.Plant
 	return species, rows.Err()
 }
 func (r *PlantSpeciesRepository) Create(ctx context.Context, p plantspecies.PlantSpecies) (plantspecies.PlantSpecies, error) {
-	row := r.pool.QueryRow(ctx, "INSERT INTO plant_species (common_name, scientific_name, description) VALUES ($1, $2, $3) RETURNING id, common_name, scientific_name, description", p.CommonName, p.ScientificName, p.Description)
-	err := row.Scan(&p.ID, &p.CommonName, &p.ScientificName, &p.Description)
+	row := r.pool.QueryRow(ctx, "INSERT INTO plant_species (common_name, scientific_name, description) VALUES ($1, $2, $3) RETURNING id, common_name, scientific_name, description, created_at, updated_at", p.CommonName, p.ScientificName, p.Description)
+	err := row.Scan(&p.ID, &p.CommonName, &p.ScientificName, &p.Description, &p.CreatedAt, &p.UpdatedAt)
 	return p, err
 }
 func (r *PlantSpeciesRepository) Update(ctx context.Context, p plantspecies.PlantSpecies) (plantspecies.PlantSpecies, error) {
-	row := r.pool.QueryRow(ctx, "UPDATE plant_species SET common_name=$2, scientific_name=$3, description=$4 WHERE id=$1 RETURNING id, common_name, scientific_name, description", p.ID, p.CommonName, p.ScientificName, p.Description)
-	err := row.Scan(&p.ID, &p.CommonName, &p.ScientificName, &p.Description)
+	row := r.pool.QueryRow(ctx, "UPDATE plant_species SET common_name=$2, scientific_name=$3, description=$4, updated_at=NOW() WHERE id=$1 RETURNING id, common_name, scientific_name, description, created_at, updated_at", p.ID, p.CommonName, p.ScientificName, p.Description)
+	err := row.Scan(&p.ID, &p.CommonName, &p.ScientificName, &p.Description, &p.CreatedAt, &p.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return plantspecies.PlantSpecies{}, plantspecies.ErrNotFound
 	}

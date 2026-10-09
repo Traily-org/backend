@@ -87,3 +87,11 @@ func scanTrack(row pgx.Row) (track.Track, error) {
 	}
 	return t, err
 }
+
+const (
+	getTrackQuery         = "SELECT id, user_id, ST_AsText(route), distance_m, elevation_gain_m, elevation_loss_m, started_at, ended_at, created_at FROM track WHERE id = $1"
+	listTracksByUserQuery = "SELECT id, user_id, ST_AsText(route), distance_m, elevation_gain_m, elevation_loss_m, started_at, ended_at, created_at FROM track WHERE user_id = $1 ORDER BY created_at DESC"
+	createTrackQuery      = "INSERT INTO track (user_id, route, distance_m, elevation_gain_m, elevation_loss_m, started_at, ended_at) VALUES ($1, ST_GeomFromText($2, 4326), $3, $4, $5, $6, $7) RETURNING id, user_id, ST_AsText(route), distance_m, elevation_gain_m, elevation_loss_m, started_at, ended_at, created_at"
+	updateTrackQuery      = "UPDATE track SET user_id = $2, route = ST_GeomFromText($3, 4326), distance_m = $4, elevation_gain_m = $5, elevation_loss_m = $6, started_at = $7, ended_at = $8 WHERE id = $1 RETURNING id, user_id, ST_AsText(route), distance_m, elevation_gain_m, elevation_loss_m, started_at, ended_at, created_at"
+	deleteTrackQuery      = "DELETE FROM track WHERE id = $1"
+)
