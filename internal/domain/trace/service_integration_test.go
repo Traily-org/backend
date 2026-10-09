@@ -4,6 +4,7 @@ package trace_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -129,7 +130,7 @@ func TestTraceService_Update(t *testing.T) {
 	})
 	trk, _ := trackSvc.Create(ctx, track.Track{
 		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:  []byte("LINESTRING(0 0, 1 1)"),
 	})
 
 	created, _ := traceSvc.Create(ctx, trace.Trace{
@@ -159,13 +160,18 @@ func TestTraceService_List(t *testing.T) {
 		Password: "secret",
 		Name:     "Charlie",
 	})
-	trk, _ := trackSvc.Create(ctx, track.Track{
-		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
-	})
-
-	traceSvc.Create(ctx, trace.Trace{UserID: usr.ID, TrackID: trk.ID, Name: "Trail 1"})
-	traceSvc.Create(ctx, trace.Trace{UserID: usr.ID, TrackID: trk.ID, Name: "Trail 2"})
+	for i := 0; i < 2; i++ {
+		trk, err := trackSvc.Create(ctx, track.Track{
+			UserID: usr.ID,
+			Route:  []byte("LINESTRING(0 0, 1 1)"),
+		})
+		if err != nil {
+			t.Fatalf("Create track error = %v", err)
+		}
+		if _, err := traceSvc.Create(ctx, trace.Trace{UserID: usr.ID, TrackID: trk.ID, Name: fmt.Sprintf("Trail %d", i+1)}); err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+	}
 
 	traces, err := traceSvc.List(ctx)
 	if err != nil {
@@ -189,7 +195,7 @@ func TestTraceService_Delete(t *testing.T) {
 	})
 	trk, _ := trackSvc.Create(ctx, track.Track{
 		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:  []byte("LINESTRING(0 0, 1 1)"),
 	})
 
 	created, _ := traceSvc.Create(ctx, trace.Trace{

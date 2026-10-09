@@ -130,13 +130,18 @@ func TestActivityService_List(t *testing.T) {
 		Password: "secret",
 		Name:     "Bob",
 	})
-	trk, _ := trackSvc.Create(ctx, track.Track{
-		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
-	})
-
-	activitySvc.Create(ctx, activity.Activity{UserID: usr.ID, TrackID: trk.ID})
-	activitySvc.Create(ctx, activity.Activity{UserID: usr.ID, TrackID: trk.ID})
+	for i := 0; i < 2; i++ {
+		trk, err := trackSvc.Create(ctx, track.Track{
+			UserID: usr.ID,
+			Route:  []byte("LINESTRING(0 0, 1 1)"),
+		})
+		if err != nil {
+			t.Fatalf("Create track error = %v", err)
+		}
+		if _, err := activitySvc.Create(ctx, activity.Activity{UserID: usr.ID, TrackID: trk.ID}); err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+	}
 
 	activities, err := activitySvc.List(ctx)
 	if err != nil {
@@ -160,7 +165,7 @@ func TestActivityService_Delete(t *testing.T) {
 	})
 	trk, _ := trackSvc.Create(ctx, track.Track{
 		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:  []byte("LINESTRING(0 0, 1 1)"),
 	})
 
 	created, _ := activitySvc.Create(ctx, activity.Activity{
