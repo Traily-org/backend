@@ -1,7 +1,7 @@
 CREATE TABLE publication (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL
-        REFERENCES app_user(id)
+        REFERENCES users(id)
         ON DELETE CASCADE,
     track_id UUID NOT NULL
         REFERENCES track(id)

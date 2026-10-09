@@ -1,7 +1,7 @@
 CREATE TABLE poi (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID
-        REFERENCES app_user(id)
+        REFERENCES users(id)
         ON DELETE SET NULL,
     name VARCHAR(150) NOT NULL,
     description TEXT,
