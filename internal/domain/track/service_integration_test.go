@@ -81,7 +81,7 @@ func TestTrackService_CreateAndGet(t *testing.T) {
 	distance := 5.5
 	created, err := trackSvc.Create(ctx, track.Track{
 		UserID:    usr.ID,
-		Route:     []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:     []byte("LINESTRING(0 0, 1 1)"),
 		DistanceM: &distance,
 	})
 	if err != nil {
@@ -109,8 +109,8 @@ func TestTrackService_List(t *testing.T) {
 		Name:     "Bob",
 	})
 
-	trackSvc.Create(ctx, track.Track{UserID: usr.ID, Route: []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`)})
-	trackSvc.Create(ctx, track.Track{UserID: usr.ID, Route: []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`)})
+	trackSvc.Create(ctx, track.Track{UserID: usr.ID, Route: []byte("LINESTRING(0 0, 1 1)")})
+	trackSvc.Create(ctx, track.Track{UserID: usr.ID, Route: []byte("LINESTRING(1 1, 2 2)")})
 
 	tracks, err := trackSvc.ListByUser(ctx, usr.ID)
 	if err != nil {
@@ -135,7 +135,7 @@ func TestTrackService_Delete(t *testing.T) {
 
 	created, _ := trackSvc.Create(ctx, track.Track{
 		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:  []byte("LINESTRING(0 0, 1 1)"),
 	})
 
 	if err := trackSvc.Delete(ctx, created.ID); err != nil {

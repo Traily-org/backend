@@ -85,7 +85,7 @@ func TestPublicationService_CreateAndGet(t *testing.T) {
 	})
 	trk, _ := trackSvc.Create(ctx, track.Track{
 		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:  []byte("LINESTRING(0 0, 1 1)"),
 	})
 
 	created, err := pubSvc.Create(ctx, publication.Publication{
@@ -120,7 +120,7 @@ func TestPublicationService_List(t *testing.T) {
 	})
 	trk, _ := trackSvc.Create(ctx, track.Track{
 		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:  []byte("LINESTRING(0 0, 1 1)"),
 	})
 
 	pubSvc.Create(ctx, publication.Publication{UserID: usr.ID, TrackID: trk.ID})
@@ -148,7 +148,7 @@ func TestPublicationService_Delete(t *testing.T) {
 	})
 	trk, _ := trackSvc.Create(ctx, track.Track{
 		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:  []byte("LINESTRING(0 0, 1 1)"),
 	})
 
 	created, _ := pubSvc.Create(ctx, publication.Publication{

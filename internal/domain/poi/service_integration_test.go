@@ -82,7 +82,7 @@ func TestPOIService_CreateAndGet(t *testing.T) {
 		UserID:   &usr.ID,
 		Name:     "Mountain Peak",
 		Type:     "viewpoint",
-		Location: []byte(`{"type":"Point","coordinates":[0,0]}`),
+		Location: []byte("POINT(0 0)"),
 	})
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
@@ -113,13 +113,13 @@ func TestPOIService_List(t *testing.T) {
 		UserID:   &usr.ID,
 		Name:     "Waterfall",
 		Type:     "waterfall",
-		Location: []byte(`{"type":"Point","coordinates":[0,0]}`),
+		Location: []byte("POINT(0 0)"),
 	})
 	poiSvc.Create(ctx, poi.POI{
 		UserID:   &usr.ID,
 		Name:     "Lake",
 		Type:     "lake",
-		Location: []byte(`{"type":"Point","coordinates":[1,1]}`),
+		Location: []byte("POINT(1 1)"),
 	})
 
 	pois, err := poiSvc.List(ctx)
@@ -147,7 +147,7 @@ func TestPOIService_Delete(t *testing.T) {
 		UserID:   &usr.ID,
 		Name:     "To Delete",
 		Type:     "other",
-		Location: []byte(`{"type":"Point","coordinates":[0,0]}`),
+		Location: []byte("POINT(0 0)"),
 	})
 
 	if err := poiSvc.Delete(ctx, created.ID); err != nil {

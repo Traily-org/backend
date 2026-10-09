@@ -89,7 +89,7 @@ func TestTraceService_CreateAndGet(t *testing.T) {
 
 	trk, err := trackSvc.Create(ctx, track.Track{
 		UserID: usr.ID,
-		Route:  []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
+		Route:  []byte("LINESTRING(0 0, 1 1)"),
 	})
 	if err != nil {
 		t.Fatalf("Create track error = %v", err)
