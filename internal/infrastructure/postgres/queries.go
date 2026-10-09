@@ -13,3 +13,36 @@ var updateUserQuery string
 
 //go:embed queries/delete_user.sql
 var deleteUserQuery string
+
+//go:embed queries/get_appuser.sql
+var getAppUserQuery string
+
+//go:embed queries/list_appusers.sql
+var listAppUsersQuery string
+
+//go:embed queries/create_appuser.sql
+var createAppUserQuery string
+
+//go:embed queries/update_appuser.sql
+var updateAppUserQuery string
+
+//go:embed queries/delete_appuser.sql
+var deleteAppUserQuery string
+
+//go:embed queries/get_track.sql
+var getTrackQuery string
+
+//go:embed queries/list_tracks_by_user.sql
+var listTracksByUserQuery string
+
+//go:embed queries/create_track.sql
+var createTrackQuery string
+
+//go:embed queries/update_track.sql
+var updateTrackQuery string
+
+//go:embed queries/delete_track.sql
+var deleteTrackQuery string
+
+// Placeholder queries - inline SQL in repositories
+// trace, activity, publication, poi, herbier, plantspecies, herbierentry queries are inline in their repositories

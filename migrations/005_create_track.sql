@@ -1,7 +1,7 @@
 CREATE TABLE track (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL
-        REFERENCES app_user(id)
+        REFERENCES users(id)
         ON DELETE CASCADE,
     route GEOMETRY(LineString, 4326) NOT NULL,
     distance_m DOUBLE PRECISION,
