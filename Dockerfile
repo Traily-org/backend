@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . .
 
 RUN go build -ldflags "-s -w" -o traily-backend ./cmd/main.go
 
-FROM golang:1.25-alpine AS dev
+FROM golang:1.26-alpine AS dev
 
 WORKDIR /app
 
