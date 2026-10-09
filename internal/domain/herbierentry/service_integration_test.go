@@ -99,7 +99,7 @@ func TestHerbierEntryService_CreateAndGet(t *testing.T) {
 	})
 
 	created, err := heSvc.Create(ctx, herbierentry.HerbierEntry{
-		HerbierId:      herb.ID,
+		HerbierID:      herb.ID,
 		PlantSpeciesID: ps.ID,
 	})
 	if err != nil {
@@ -111,7 +111,7 @@ func TestHerbierEntryService_CreateAndGet(t *testing.T) {
 		t.Fatalf("Get() error = %v", err)
 	}
 
-	if fetched.HerbierId != herb.ID {
+	if fetched.HerbierID != herb.ID {
 		t.Fatalf("Get() returned mismatched entry")
 	}
 }
@@ -136,11 +136,11 @@ func TestHerbierEntryService_List(t *testing.T) {
 	ps2, _ := psSvc.Create(ctx, plantspecies.PlantSpecies{CommonName: "Lily"})
 
 	heSvc.Create(ctx, herbierentry.HerbierEntry{
-		HerbierId:      herb.ID,
+		HerbierID:      herb.ID,
 		PlantSpeciesID: ps1.ID,
 	})
 	heSvc.Create(ctx, herbierentry.HerbierEntry{
-		HerbierId:      herb.ID,
+		HerbierID:      herb.ID,
 		PlantSpeciesID: ps2.ID,
 	})
 
@@ -175,7 +175,7 @@ func TestHerbierEntryService_Delete(t *testing.T) {
 	})
 
 	created, _ := heSvc.Create(ctx, herbierentry.HerbierEntry{
-		HerbierId:      herb.ID,
+		HerbierID:      herb.ID,
 		PlantSpeciesID: ps.ID,
 	})
 

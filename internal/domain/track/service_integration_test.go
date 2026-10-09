@@ -78,10 +78,11 @@ func TestTrackService_CreateAndGet(t *testing.T) {
 		t.Fatalf("Create user error = %v", err)
 	}
 
+	distance := 5.5
 	created, err := trackSvc.Create(ctx, track.Track{
 		UserID:    usr.ID,
 		Route:     []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
-		DistanceM: 5.5,
+		DistanceM: &distance,
 	})
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
@@ -92,7 +93,7 @@ func TestTrackService_CreateAndGet(t *testing.T) {
 		t.Fatalf("Get() error = %v", err)
 	}
 
-	if fetched.DistanceM != 5.5 {
+	if fetched.DistanceM == nil || *fetched.DistanceM != 5.5 {
 		t.Fatalf("Get() returned mismatched track")
 	}
 }
@@ -111,7 +112,7 @@ func TestTrackService_List(t *testing.T) {
 	trackSvc.Create(ctx, track.Track{UserID: usr.ID, Route: []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`)})
 	trackSvc.Create(ctx, track.Track{UserID: usr.ID, Route: []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`)})
 
-	tracks, err := trackSvc.List(ctx)
+	tracks, err := trackSvc.ListByUser(ctx, usr.ID)
 	if err != nil {
 		t.Fatalf("List() error = %v", err)
 	}

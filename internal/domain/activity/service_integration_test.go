@@ -89,10 +89,11 @@ func TestActivityService_CreateAndGet(t *testing.T) {
 	}
 
 	// Create track
+	distance := 100.5
 	trk, err := trackSvc.Create(ctx, track.Track{
 		UserID:    usr.ID,
 		Route:     []byte(`{"type":"LineString","coordinates":[[0,0],[1,1]]}`),
-		DistanceM: 100.5,
+		DistanceM: &distance,
 	})
 	if err != nil {
 		t.Fatalf("Create track error = %v", err)
