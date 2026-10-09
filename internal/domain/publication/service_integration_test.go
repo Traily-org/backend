@@ -89,9 +89,9 @@ func TestPublicationService_CreateAndGet(t *testing.T) {
 	})
 
 	created, err := pubSvc.Create(ctx, publication.Publication{
-		UserID: usr.ID,
+		UserID:  usr.ID,
 		TrackID: trk.ID,
-		Title:  ptrStr("Amazing Trail"),
+		Title:   ptrStr("Amazing Trail"),
 		Content: ptrStr("It was a great hike!"),
 	})
 	if err != nil {
@@ -152,7 +152,7 @@ func TestPublicationService_Delete(t *testing.T) {
 	})
 
 	created, _ := pubSvc.Create(ctx, publication.Publication{
-		UserID: usr.ID,
+		UserID:  usr.ID,
 		TrackID: trk.ID,
 	})
 

@@ -66,9 +66,9 @@ func TestPlantSpeciesService_CreateAndGet(t *testing.T) {
 	ctx := context.Background()
 
 	created, err := psSvc.Create(ctx, plantspecies.PlantSpecies{
-		CommonName:   "Dandelion",
+		CommonName:     "Dandelion",
 		ScientificName: ptrStr("Taraxacum officinale"),
-		Description: ptrStr("Common wild flower"),
+		Description:    ptrStr("Common wild flower"),
 	})
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
