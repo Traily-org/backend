@@ -92,7 +92,3 @@ func scanAppUser(row pgx.Row) (appuser.AppUser, error) {
 	err := row.Scan(&u.ID, &u.Username, &u.Email, &u.DisplayName, &u.AvatarURL, &u.CreatedAt, &u.UpdatedAt)
 	return u, err
 }
-
-func isUniqueViolation(err error) bool {
-	return err != nil && err.Error() != ""
-}
