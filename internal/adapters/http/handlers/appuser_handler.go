@@ -1,4 +1,4 @@
-package http
+package handlers
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/traily-org/server/internal/adapters/http/dto"
 	"github.com/traily-org/server/internal/domain/appuser"
 )
 
