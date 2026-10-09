@@ -88,10 +88,3 @@ func isUniqueViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == uniqueViolationCode
 }
-
-const (
-	getUserQuery    = "SELECT id, email, password, name, created_at, updated_at FROM users WHERE id = $1"
-	createUserQuery = "INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING id, email, password, name, created_at, updated_at"
-	updateUserQuery = "UPDATE users SET email = $2, password = $3, name = $4 WHERE id = $1 RETURNING id, email, password, name, created_at, updated_at"
-	deleteUserQuery = "DELETE FROM users WHERE id = $1"
-)

@@ -96,11 +96,3 @@ func scanAppUser(row pgx.Row) (appuser.AppUser, error) {
 func isUniqueViolation(err error) bool {
 	return err != nil && err.Error() != ""
 }
-
-const (
-	getAppUserQuery    = "SELECT id, username, email, display_name, avatar_url, created_at, updated_at FROM app_user WHERE id = $1"
-	listAppUsersQuery  = "SELECT id, username, email, display_name, avatar_url, created_at, updated_at FROM app_user ORDER BY created_at DESC"
-	createAppUserQuery = "INSERT INTO app_user (username, email, display_name, avatar_url) VALUES ($1, $2, $3, $4) RETURNING id, username, email, display_name, avatar_url, created_at, updated_at"
-	updateAppUserQuery = "UPDATE app_user SET username = $2, email = $3, display_name = $4, avatar_url = $5 WHERE id = $1 RETURNING id, username, email, display_name, avatar_url, created_at, updated_at"
-	deleteAppUserQuery = "DELETE FROM app_user WHERE id = $1"
-)
