@@ -103,6 +103,9 @@ func TestTraceService_CreateAndGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
+	if created.ID == "" {
+		t.Fatalf("Create() returned empty ID")
+	}
 
 	fetched, err := traceSvc.Get(ctx, created.ID)
 	if err != nil {
