@@ -1,6 +1,6 @@
 module github.com/traily-org/server
 
-go 1.25.0
+go 1.26
 
 require (
 	github.com/charmbracelet/log v1.0.0
