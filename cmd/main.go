@@ -10,11 +10,11 @@ import (
 	"github.com/traily-org/server/internal/config"
 	"github.com/traily-org/server/internal/domain/activity"
 	"github.com/traily-org/server/internal/domain/appuser"
-	"github.com/traily-org/server/internal/domain/herbier"
-	"github.com/traily-org/server/internal/domain/herbierentry"
-	"github.com/traily-org/server/internal/domain/plantspecies"
+	"github.com/traily-org/server/internal/domain/observation"
+	"github.com/traily-org/server/internal/domain/photo"
 	"github.com/traily-org/server/internal/domain/poi"
 	"github.com/traily-org/server/internal/domain/publication"
+	"github.com/traily-org/server/internal/domain/species"
 	"github.com/traily-org/server/internal/domain/trace"
 	"github.com/traily-org/server/internal/domain/track"
 	"github.com/traily-org/server/internal/domain/user"
@@ -71,20 +71,20 @@ func main() {
 	poiService := poi.NewService(poiRepository)
 	poiHandler := handlers.NewPoiHandler(poiService)
 
-	// Herbier service
-	herbierRepository := postgres.NewHerbierRepository(pool)
-	herbierService := herbier.NewService(herbierRepository)
-	herbierHandler := handlers.NewHerbierHandler(herbierService)
+	// Species service
+	speciesRepository := postgres.NewSpeciesRepository(pool)
+	speciesService := species.NewService(speciesRepository)
+	speciesHandler := handlers.NewSpeciesHandler(speciesService)
 
-	// PlantSpecies service
-	plantSpeciesRepository := postgres.NewPlantSpeciesRepository(pool)
-	plantSpeciesService := plantspecies.NewService(plantSpeciesRepository)
-	plantSpeciesHandler := handlers.NewPlantspeciesHandler(plantSpeciesService)
+	// Photo service
+	photoRepository := postgres.NewPhotoRepository(pool)
+	photoService := photo.NewService(photoRepository)
+	photoHandler := handlers.NewPhotoHandler(photoService)
 
-	// HerbierEntry service
-	herbierEntryRepository := postgres.NewHerbierEntryRepository(pool)
-	herbierEntryService := herbierentry.NewService(herbierEntryRepository)
-	herbierEntryHandler := handlers.NewHerbierentryHandler(herbierEntryService)
+	// Observation service
+	observationRepository := postgres.NewObservationRepository(pool)
+	observationService := observation.NewService(observationRepository)
+	observationHandler := handlers.NewObservationHandler(observationService)
 
 	srv := server.NewServer(
 		userHandler,
@@ -94,9 +94,9 @@ func main() {
 		activityHandler,
 		publicationHandler,
 		poiHandler,
-		herbierHandler,
-		plantSpeciesHandler,
-		herbierEntryHandler,
+		speciesHandler,
+		photoHandler,
+		observationHandler,
 	)
 
 	if err := srv.Run(cfg.Port); err != nil {

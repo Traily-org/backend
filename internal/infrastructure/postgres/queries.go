@@ -45,4 +45,4 @@ var updateTrackQuery string
 var deleteTrackQuery string
 
 // Placeholder queries - inline SQL in repositories
-// trace, activity, publication, poi, herbier, plantspecies, herbierentry queries are inline in their repositories
+// trace, activity, publication, poi, species, photo, observation queries are inline in their repositories

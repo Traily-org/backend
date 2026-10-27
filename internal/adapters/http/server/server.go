@@ -9,17 +9,17 @@ import (
 )
 
 type Server struct {
-	router              *gin.Engine
-	userHandler         *handlers.UserHandler
-	appUserHandler      *handlers.AppUserHandler
-	trackHandler        *handlers.TrackHandler
-	traceHandler        *handlers.TraceHandler
-	activityHandler     *handlers.ActivityHandler
-	publicationHandler  *handlers.PublicationHandler
-	poiHandler          *handlers.PoiHandler
-	herbierHandler      *handlers.HerbierHandler
-	plantSpeciesHandler *handlers.PlantspeciesHandler
-	herbierEntryHandler *handlers.HerbierentryHandler
+	router             *gin.Engine
+	userHandler        *handlers.UserHandler
+	appUserHandler     *handlers.AppUserHandler
+	trackHandler       *handlers.TrackHandler
+	traceHandler       *handlers.TraceHandler
+	activityHandler    *handlers.ActivityHandler
+	publicationHandler *handlers.PublicationHandler
+	poiHandler         *handlers.PoiHandler
+	speciesHandler     *handlers.SpeciesHandler
+	photoHandler       *handlers.PhotoHandler
+	observationHandler *handlers.ObservationHandler
 }
 
 func NewServer(
@@ -30,22 +30,22 @@ func NewServer(
 	activityHandler *handlers.ActivityHandler,
 	publicationHandler *handlers.PublicationHandler,
 	poiHandler *handlers.PoiHandler,
-	herbierHandler *handlers.HerbierHandler,
-	plantSpeciesHandler *handlers.PlantspeciesHandler,
-	herbierEntryHandler *handlers.HerbierentryHandler,
+	speciesHandler *handlers.SpeciesHandler,
+	photoHandler *handlers.PhotoHandler,
+	observationHandler *handlers.ObservationHandler,
 ) *Server {
 	s := &Server{
-		router:              gin.Default(),
-		userHandler:         userHandler,
-		appUserHandler:      appUserHandler,
-		trackHandler:        trackHandler,
-		traceHandler:        traceHandler,
-		activityHandler:     activityHandler,
-		publicationHandler:  publicationHandler,
-		poiHandler:          poiHandler,
-		herbierHandler:      herbierHandler,
-		plantSpeciesHandler: plantSpeciesHandler,
-		herbierEntryHandler: herbierEntryHandler,
+		router:             gin.Default(),
+		userHandler:        userHandler,
+		appUserHandler:     appUserHandler,
+		trackHandler:       trackHandler,
+		traceHandler:       traceHandler,
+		activityHandler:    activityHandler,
+		publicationHandler: publicationHandler,
+		poiHandler:         poiHandler,
+		speciesHandler:     speciesHandler,
+		photoHandler:       photoHandler,
+		observationHandler: observationHandler,
 	}
 	s.registerRoutes()
 	return s
@@ -107,24 +107,24 @@ func (s *Server) registerRoutes() {
 	v1.PUT("/pois/:id", s.poiHandler.Update)
 	v1.DELETE("/pois/:id", s.poiHandler.Delete)
 
-	// Herbier routes
-	v1.GET("/herbiers", s.herbierHandler.List)
-	v1.POST("/herbiers", s.herbierHandler.Create)
-	v1.GET("/herbiers/:id", s.herbierHandler.Get)
-	v1.PUT("/herbiers/:id", s.herbierHandler.Update)
-	v1.DELETE("/herbiers/:id", s.herbierHandler.Delete)
+	// Species routes
+	v1.GET("/species", s.speciesHandler.List)
+	v1.POST("/species", s.speciesHandler.Create)
+	v1.GET("/species/:id", s.speciesHandler.Get)
+	v1.PUT("/species/:id", s.speciesHandler.Update)
+	v1.DELETE("/species/:id", s.speciesHandler.Delete)
 
-	// PlantSpecies routes
-	v1.GET("/plant-species", s.plantSpeciesHandler.List)
-	v1.POST("/plant-species", s.plantSpeciesHandler.Create)
-	v1.GET("/plant-species/:id", s.plantSpeciesHandler.Get)
-	v1.PUT("/plant-species/:id", s.plantSpeciesHandler.Update)
-	v1.DELETE("/plant-species/:id", s.plantSpeciesHandler.Delete)
+	// Photo routes
+	v1.GET("/photos", s.photoHandler.List)
+	v1.POST("/photos", s.photoHandler.Create)
+	v1.GET("/photos/:id", s.photoHandler.Get)
+	v1.PUT("/photos/:id", s.photoHandler.Update)
+	v1.DELETE("/photos/:id", s.photoHandler.Delete)
 
-	// HerbierEntry routes
-	v1.GET("/herbier-entries", s.herbierEntryHandler.List)
-	v1.POST("/herbier-entries", s.herbierEntryHandler.Create)
-	v1.GET("/herbier-entries/:id", s.herbierEntryHandler.Get)
-	v1.PUT("/herbier-entries/:id", s.herbierEntryHandler.Update)
-	v1.DELETE("/herbier-entries/:id", s.herbierEntryHandler.Delete)
+	// Observation routes
+	v1.GET("/observations", s.observationHandler.List)
+	v1.POST("/observations", s.observationHandler.Create)
+	v1.GET("/observations/:id", s.observationHandler.Get)
+	v1.PUT("/observations/:id", s.observationHandler.Update)
+	v1.DELETE("/observations/:id", s.observationHandler.Delete)
 }
