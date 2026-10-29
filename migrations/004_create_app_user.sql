@@ -1,2 +1,0 @@
--- app_user table is now merged into users table (migration 001)
--- This migration is kept for compatibility but does nothing

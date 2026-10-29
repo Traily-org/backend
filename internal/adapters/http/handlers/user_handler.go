@@ -46,9 +46,12 @@ func (h *UserHandler) Create(ctx *gin.Context) {
 	}
 
 	u, err := h.service.Create(ctx.Request.Context(), user.User{
-		Email:    req.Email,
-		Password: req.Password,
-		Name:     req.Name,
+		Email:       req.Email,
+		Password:    req.Password,
+		Name:        req.Name,
+		Username:    req.Username,
+		DisplayName: req.DisplayName,
+		AvatarURL:   req.AvatarURL,
 	})
 	if err != nil {
 		writeUserError(ctx, err)
@@ -68,10 +71,13 @@ func (h *UserHandler) Update(ctx *gin.Context) {
 	}
 
 	u, err := h.service.Update(ctx.Request.Context(), user.User{
-		ID:       id,
-		Email:    req.Email,
-		Password: req.Password,
-		Name:     req.Name,
+		ID:          id,
+		Email:       req.Email,
+		Password:    req.Password,
+		Name:        req.Name,
+		Username:    req.Username,
+		DisplayName: req.DisplayName,
+		AvatarURL:   req.AvatarURL,
 	})
 	if err != nil {
 		writeUserError(ctx, err)

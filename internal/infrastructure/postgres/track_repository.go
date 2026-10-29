@@ -50,7 +50,7 @@ func (r *TrackRepository) Create(ctx context.Context, t track.Track) (track.Trac
 	if t.Route != nil {
 		routeWKT = string(t.Route)
 	}
-	row := r.pool.QueryRow(ctx, createTrackQuery, t.UserID, routeWKT, t.DistanceM, t.ElevationGainM, t.ElevationLossM, t.StartedAt, t.EndedAt)
+	row := r.pool.QueryRow(ctx, createTrackQuery, t.UserID, t.TrailID, routeWKT, t.DistanceM, t.ElevationGainM, t.ElevationLossM, t.StartedAt, t.EndedAt, t.IsPrivate)
 	return scanTrack(row)
 }
 
@@ -59,7 +59,7 @@ func (r *TrackRepository) Update(ctx context.Context, t track.Track) (track.Trac
 	if t.Route != nil {
 		routeWKT = string(t.Route)
 	}
-	row := r.pool.QueryRow(ctx, updateTrackQuery, t.ID, t.UserID, routeWKT, t.DistanceM, t.ElevationGainM, t.ElevationLossM, t.StartedAt, t.EndedAt)
+	row := r.pool.QueryRow(ctx, updateTrackQuery, t.ID, t.UserID, t.TrailID, routeWKT, t.DistanceM, t.ElevationGainM, t.ElevationLossM, t.StartedAt, t.EndedAt, t.IsPrivate)
 	updated, err := scanTrack(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return track.Track{}, track.ErrNotFound
@@ -81,7 +81,7 @@ func (r *TrackRepository) Delete(ctx context.Context, id string) error {
 func scanTrack(row pgx.Row) (track.Track, error) {
 	var t track.Track
 	var routeWKT string
-	err := row.Scan(&t.ID, &t.UserID, &routeWKT, &t.DistanceM, &t.ElevationGainM, &t.ElevationLossM, &t.StartedAt, &t.EndedAt, &t.CreatedAt)
+	err := row.Scan(&t.ID, &t.UserID, &t.TrailID, &routeWKT, &t.DistanceM, &t.ElevationGainM, &t.ElevationLossM, &t.StartedAt, &t.EndedAt, &t.IsPrivate, &t.CreatedAt, &t.UpdatedAt)
 	if err == nil && routeWKT != "" {
 		t.Route = []byte(routeWKT)
 	}

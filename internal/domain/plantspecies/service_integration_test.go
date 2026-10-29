@@ -5,64 +5,25 @@ package plantspecies_test
 import (
 	"context"
 	"testing"
-	"time"
-
-	"github.com/testcontainers/testcontainers-go"
-	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/traily-org/server/internal/domain/plantspecies"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
-	"github.com/traily-org/server/migrations"
+	"github.com/traily-org/server/internal/testutil"
 )
 
-func newTestPlantSpeciesService(t *testing.T) (*plantspecies.Service, func()) {
+func newTestPlantSpeciesService(t *testing.T) *plantspecies.Service {
 	t.Helper()
 
-	ctx := context.Background()
-
-	container, err := tcpostgres.Run(ctx, "postgis/postgis:16-3.4-alpine",
-		tcpostgres.WithDatabase("traily"),
-		tcpostgres.WithUsername("traily"),
-		tcpostgres.WithPassword("traily"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(30*time.Second),
-		),
-	)
-	if err != nil {
-		t.Fatalf("failed to start postgres container: %v", err)
-	}
-
-	cleanup := func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Logf("failed to terminate postgres container: %v", err)
-		}
-	}
-
-	dsn, err := container.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatalf("failed to get connection string: %v", err)
-	}
-
-	pool, err := postgres.Connect(ctx, dsn)
-	if err != nil {
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-	t.Cleanup(func() { pool.Close() })
-
-	if err := migrations.Run(ctx, pool); err != nil {
-		t.Fatalf("failed to run migrations: %v", err)
-	}
+	pool := testutil.NewPool(t)
 
 	psRepo := postgres.NewPlantSpeciesRepository(pool)
 	psSvc := plantspecies.NewService(psRepo)
 
-	return psSvc, cleanup
+	return psSvc
 }
 
 func TestPlantSpeciesService_CreateAndGet(t *testing.T) {
-	psSvc, cleanup := newTestPlantSpeciesService(t)
-	defer cleanup()
+	psSvc := newTestPlantSpeciesService(t)
 	ctx := context.Background()
 
 	created, err := psSvc.Create(ctx, plantspecies.PlantSpecies{
@@ -85,8 +46,7 @@ func TestPlantSpeciesService_CreateAndGet(t *testing.T) {
 }
 
 func TestPlantSpeciesService_List(t *testing.T) {
-	psSvc, cleanup := newTestPlantSpeciesService(t)
-	defer cleanup()
+	psSvc := newTestPlantSpeciesService(t)
 	ctx := context.Background()
 
 	psSvc.Create(ctx, plantspecies.PlantSpecies{CommonName: "Rose"})
@@ -103,8 +63,7 @@ func TestPlantSpeciesService_List(t *testing.T) {
 }
 
 func TestPlantSpeciesService_Delete(t *testing.T) {
-	psSvc, cleanup := newTestPlantSpeciesService(t)
-	defer cleanup()
+	psSvc := newTestPlantSpeciesService(t)
 	ctx := context.Background()
 
 	created, _ := psSvc.Create(ctx, plantspecies.PlantSpecies{

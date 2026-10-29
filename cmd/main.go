@@ -9,15 +9,28 @@ import (
 	"github.com/traily-org/server/internal/adapters/http/server"
 	"github.com/traily-org/server/internal/config"
 	"github.com/traily-org/server/internal/domain/activity"
-	"github.com/traily-org/server/internal/domain/appuser"
+	"github.com/traily-org/server/internal/domain/badge"
 	"github.com/traily-org/server/internal/domain/herbier"
 	"github.com/traily-org/server/internal/domain/herbierentry"
+	"github.com/traily-org/server/internal/domain/moderationlog"
+	"github.com/traily-org/server/internal/domain/observation"
+	"github.com/traily-org/server/internal/domain/photo"
 	"github.com/traily-org/server/internal/domain/plantspecies"
 	"github.com/traily-org/server/internal/domain/poi"
+	"github.com/traily-org/server/internal/domain/protectedzone"
 	"github.com/traily-org/server/internal/domain/publication"
+	"github.com/traily-org/server/internal/domain/refreshtoken"
+	"github.com/traily-org/server/internal/domain/report"
+	"github.com/traily-org/server/internal/domain/species"
+	"github.com/traily-org/server/internal/domain/team"
+	"github.com/traily-org/server/internal/domain/teammember"
 	"github.com/traily-org/server/internal/domain/trace"
 	"github.com/traily-org/server/internal/domain/track"
+	"github.com/traily-org/server/internal/domain/trail"
 	"github.com/traily-org/server/internal/domain/user"
+	"github.com/traily-org/server/internal/domain/userbadge"
+	"github.com/traily-org/server/internal/domain/userpoint"
+	"github.com/traily-org/server/internal/domain/waypoint"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
 	"github.com/traily-org/server/migrations"
 )
@@ -36,15 +49,10 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	// Legacy user service
+	// User service
 	userRepository := postgres.NewUserRepository(pool)
 	userService := user.NewService(userRepository)
 	userHandler := handlers.NewUserHandler(userService)
-
-	// AppUser service
-	appUserRepository := postgres.NewAppUserRepository(pool)
-	appUserService := appuser.NewService(appUserRepository)
-	appUserHandler := handlers.NewAppUserHandler(appUserService)
 
 	// Track service
 	trackRepository := postgres.NewTrackRepository(pool)
@@ -86,19 +94,101 @@ func main() {
 	herbierEntryService := herbierentry.NewService(herbierEntryRepository)
 	herbierEntryHandler := handlers.NewHerbierentryHandler(herbierEntryService)
 
-	srv := server.NewServer(
-		userHandler,
-		appUserHandler,
-		trackHandler,
-		traceHandler,
-		activityHandler,
-		publicationHandler,
-		poiHandler,
-		herbierHandler,
-		plantSpeciesHandler,
-		herbierEntryHandler,
-	)
+	// Trail service
+	trailRepository := postgres.NewTrailRepository(pool)
+	trailService := trail.NewService(trailRepository)
+	trailHandler := handlers.NewTrailHandler(trailService)
 
+	// Waypoint service
+	waypointRepository := postgres.NewWaypointRepository(pool)
+	waypointService := waypoint.NewService(waypointRepository)
+	waypointHandler := handlers.NewWaypointHandler(waypointService)
+
+	// Species service
+	speciesRepository := postgres.NewSpeciesRepository(pool)
+	speciesService := species.NewService(speciesRepository)
+	speciesHandler := handlers.NewSpeciesHandler(speciesService)
+
+	// Photo service
+	photoRepository := postgres.NewPhotoRepository(pool)
+	photoService := photo.NewService(photoRepository)
+	photoHandler := handlers.NewPhotoHandler(photoService)
+
+	// Observation service
+	observationRepository := postgres.NewObservationRepository(pool)
+	observationService := observation.NewService(observationRepository)
+	observationHandler := handlers.NewObservationHandler(observationService)
+
+	// RefreshToken service
+	refreshTokenRepository := postgres.NewRefreshTokenRepository(pool)
+	refreshTokenService := refreshtoken.NewService(refreshTokenRepository)
+	refreshTokenHandler := handlers.NewRefreshTokenHandler(refreshTokenService)
+
+	// UserPoint service
+	userPointRepository := postgres.NewUserPointRepository(pool)
+	userPointService := userpoint.NewService(userPointRepository)
+	userPointHandler := handlers.NewUserPointHandler(userPointService)
+
+	// Badge service
+	badgeRepository := postgres.NewBadgeRepository(pool)
+	badgeService := badge.NewService(badgeRepository)
+	badgeHandler := handlers.NewBadgeHandler(badgeService)
+
+	// UserBadge service
+	userBadgeRepository := postgres.NewUserBadgeRepository(pool)
+	userBadgeService := userbadge.NewService(userBadgeRepository)
+	userBadgeHandler := handlers.NewUserBadgeHandler(userBadgeService)
+
+	// Team service
+	teamRepository := postgres.NewTeamRepository(pool)
+	teamService := team.NewService(teamRepository)
+	teamHandler := handlers.NewTeamHandler(teamService)
+
+	// TeamMember service
+	teamMemberRepository := postgres.NewTeamMemberRepository(pool)
+	teamMemberService := teammember.NewService(teamMemberRepository)
+	teamMemberHandler := handlers.NewTeamMemberHandler(teamMemberService)
+
+	// ProtectedZone service
+	protectedZoneRepository := postgres.NewProtectedZoneRepository(pool)
+	protectedZoneService := protectedzone.NewService(protectedZoneRepository)
+	protectedZoneHandler := handlers.NewProtectedZoneHandler(protectedZoneService)
+
+	// Report service
+	reportRepository := postgres.NewReportRepository(pool)
+	reportService := report.NewService(reportRepository)
+	reportHandler := handlers.NewReportHandler(reportService)
+
+	// ModerationLog service
+	moderationLogRepository := postgres.NewModerationLogRepository(pool)
+	moderationLogService := moderationlog.NewService(moderationLogRepository)
+	moderationLogHandler := handlers.NewModerationLogHandler(moderationLogService)
+
+	srv := server.NewServer(server.Handlers{
+		User:          userHandler,
+		Track:         trackHandler,
+		Trail:         trailHandler,
+		Waypoint:      waypointHandler,
+		Trace:         traceHandler,
+		Activity:      activityHandler,
+		Publication:   publicationHandler,
+		Poi:           poiHandler,
+		Herbier:       herbierHandler,
+		PlantSpecies:  plantSpeciesHandler,
+		HerbierEntry:  herbierEntryHandler,
+		Species:       speciesHandler,
+		Photo:         photoHandler,
+		Observation:   observationHandler,
+		RefreshToken:  refreshTokenHandler,
+		UserPoint:     userPointHandler,
+		Badge:         badgeHandler,
+		UserBadge:     userBadgeHandler,
+		Team:          teamHandler,
+		TeamMember:    teamMemberHandler,
+		ProtectedZone: protectedZoneHandler,
+		Report:        reportHandler,
+		ModerationLog: moderationLogHandler,
+	})
 	if err := srv.Run(cfg.Port); err != nil {
 		log.Fatalf("server stopped: %v", err)
 	}

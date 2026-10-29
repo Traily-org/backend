@@ -1,4 +1,4 @@
-CREATE TYPE trace_difficulty AS ENUM (
+CREATE TYPE trail_difficulty AS ENUM (
     'easy',
     'moderate',
     'hard',

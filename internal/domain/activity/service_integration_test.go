@@ -5,61 +5,22 @@ package activity_test
 import (
 	"context"
 	"testing"
-	"time"
-
-	"github.com/testcontainers/testcontainers-go"
-	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/traily-org/server/internal/domain/activity"
 	"github.com/traily-org/server/internal/domain/track"
 	"github.com/traily-org/server/internal/domain/user"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
-	"github.com/traily-org/server/migrations"
+	"github.com/traily-org/server/internal/testutil"
 )
 
 func newTestActivityService(t *testing.T) (
 	*activity.Service,
 	*track.Service,
 	*user.Service,
-	func(),
 ) {
 	t.Helper()
 
-	ctx := context.Background()
-
-	container, err := tcpostgres.Run(ctx, "postgis/postgis:16-3.4-alpine",
-		tcpostgres.WithDatabase("traily"),
-		tcpostgres.WithUsername("traily"),
-		tcpostgres.WithPassword("traily"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(30*time.Second),
-		),
-	)
-	if err != nil {
-		t.Fatalf("failed to start postgres container: %v", err)
-	}
-
-	cleanup := func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Logf("failed to terminate postgres container: %v", err)
-		}
-	}
-
-	dsn, err := container.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatalf("failed to get connection string: %v", err)
-	}
-
-	pool, err := postgres.Connect(ctx, dsn)
-	if err != nil {
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-	t.Cleanup(func() { pool.Close() })
-
-	if err := migrations.Run(ctx, pool); err != nil {
-		t.Fatalf("failed to run migrations: %v", err)
-	}
+	pool := testutil.NewPool(t)
 
 	userRepo := postgres.NewUserRepository(pool)
 	userSvc := user.NewService(userRepo)
@@ -70,12 +31,11 @@ func newTestActivityService(t *testing.T) (
 	activityRepo := postgres.NewActivityRepository(pool)
 	activitySvc := activity.NewService(activityRepo)
 
-	return activitySvc, trackSvc, userSvc, cleanup
+	return activitySvc, trackSvc, userSvc
 }
 
 func TestActivityService_CreateAndGet(t *testing.T) {
-	activitySvc, trackSvc, userSvc, cleanup := newTestActivityService(t)
-	defer cleanup()
+	activitySvc, trackSvc, userSvc := newTestActivityService(t)
 	ctx := context.Background()
 
 	// Create user
@@ -121,8 +81,7 @@ func TestActivityService_CreateAndGet(t *testing.T) {
 }
 
 func TestActivityService_List(t *testing.T) {
-	activitySvc, trackSvc, userSvc, cleanup := newTestActivityService(t)
-	defer cleanup()
+	activitySvc, trackSvc, userSvc := newTestActivityService(t)
 	ctx := context.Background()
 
 	usr, _ := userSvc.Create(ctx, user.User{
@@ -149,8 +108,7 @@ func TestActivityService_List(t *testing.T) {
 }
 
 func TestActivityService_Delete(t *testing.T) {
-	activitySvc, trackSvc, userSvc, cleanup := newTestActivityService(t)
-	defer cleanup()
+	activitySvc, trackSvc, userSvc := newTestActivityService(t)
 	ctx := context.Background()
 
 	usr, _ := userSvc.Create(ctx, user.User{

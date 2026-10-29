@@ -5,61 +5,22 @@ package trace_test
 import (
 	"context"
 	"testing"
-	"time"
-
-	"github.com/testcontainers/testcontainers-go"
-	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/traily-org/server/internal/domain/trace"
 	"github.com/traily-org/server/internal/domain/track"
 	"github.com/traily-org/server/internal/domain/user"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
-	"github.com/traily-org/server/migrations"
+	"github.com/traily-org/server/internal/testutil"
 )
 
 func newTestTraceService(t *testing.T) (
 	*trace.Service,
 	*track.Service,
 	*user.Service,
-	func(),
 ) {
 	t.Helper()
 
-	ctx := context.Background()
-
-	container, err := tcpostgres.Run(ctx, "postgis/postgis:16-3.4-alpine",
-		tcpostgres.WithDatabase("traily"),
-		tcpostgres.WithUsername("traily"),
-		tcpostgres.WithPassword("traily"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(30*time.Second),
-		),
-	)
-	if err != nil {
-		t.Fatalf("failed to start postgres container: %v", err)
-	}
-
-	cleanup := func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Logf("failed to terminate postgres container: %v", err)
-		}
-	}
-
-	dsn, err := container.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatalf("failed to get connection string: %v", err)
-	}
-
-	pool, err := postgres.Connect(ctx, dsn)
-	if err != nil {
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-	t.Cleanup(func() { pool.Close() })
-
-	if err := migrations.Run(ctx, pool); err != nil {
-		t.Fatalf("failed to run migrations: %v", err)
-	}
+	pool := testutil.NewPool(t)
 
 	userRepo := postgres.NewUserRepository(pool)
 	userSvc := user.NewService(userRepo)
@@ -70,12 +31,11 @@ func newTestTraceService(t *testing.T) (
 	traceRepo := postgres.NewTraceRepository(pool)
 	traceSvc := trace.NewService(traceRepo)
 
-	return traceSvc, trackSvc, userSvc, cleanup
+	return traceSvc, trackSvc, userSvc
 }
 
 func TestTraceService_CreateAndGet(t *testing.T) {
-	traceSvc, trackSvc, userSvc, cleanup := newTestTraceService(t)
-	defer cleanup()
+	traceSvc, trackSvc, userSvc := newTestTraceService(t)
 	ctx := context.Background()
 
 	usr, err := userSvc.Create(ctx, user.User{
@@ -118,8 +78,7 @@ func TestTraceService_CreateAndGet(t *testing.T) {
 }
 
 func TestTraceService_Update(t *testing.T) {
-	traceSvc, trackSvc, userSvc, cleanup := newTestTraceService(t)
-	defer cleanup()
+	traceSvc, trackSvc, userSvc := newTestTraceService(t)
 	ctx := context.Background()
 
 	usr, _ := userSvc.Create(ctx, user.User{
@@ -150,8 +109,7 @@ func TestTraceService_Update(t *testing.T) {
 }
 
 func TestTraceService_List(t *testing.T) {
-	traceSvc, trackSvc, userSvc, cleanup := newTestTraceService(t)
-	defer cleanup()
+	traceSvc, trackSvc, userSvc := newTestTraceService(t)
 	ctx := context.Background()
 
 	usr, _ := userSvc.Create(ctx, user.User{
@@ -178,8 +136,7 @@ func TestTraceService_List(t *testing.T) {
 }
 
 func TestTraceService_Delete(t *testing.T) {
-	traceSvc, trackSvc, userSvc, cleanup := newTestTraceService(t)
-	defer cleanup()
+	traceSvc, trackSvc, userSvc := newTestTraceService(t)
 	ctx := context.Background()
 
 	usr, _ := userSvc.Create(ctx, user.User{

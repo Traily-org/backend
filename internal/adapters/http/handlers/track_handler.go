@@ -61,12 +61,14 @@ func (h *TrackHandler) ListByUser(ctx *gin.Context) {
 func (h *TrackHandler) Create(ctx *gin.Context) {
 	var req struct {
 		UserID         string     `json:"user_id" binding:"required"`
+		TrailID        *string    `json:"trail_id"`
 		Route          string     `json:"route" binding:"required"`
 		DistanceM      *float64   `json:"distance_m"`
 		ElevationGainM *float64   `json:"elevation_gain_m"`
 		ElevationLossM *float64   `json:"elevation_loss_m"`
 		StartedAt      *time.Time `json:"started_at"`
 		EndedAt        *time.Time `json:"ended_at"`
+		IsPrivate      bool       `json:"is_private"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(nethttp.StatusBadRequest, gin.H{"error": err.Error()})
@@ -75,12 +77,14 @@ func (h *TrackHandler) Create(ctx *gin.Context) {
 
 	t, err := h.service.Create(ctx.Request.Context(), track.Track{
 		UserID:         req.UserID,
+		TrailID:        req.TrailID,
 		Route:          []byte(req.Route),
 		DistanceM:      req.DistanceM,
 		ElevationGainM: req.ElevationGainM,
 		ElevationLossM: req.ElevationLossM,
 		StartedAt:      req.StartedAt,
 		EndedAt:        req.EndedAt,
+		IsPrivate:      req.IsPrivate,
 	})
 	if err != nil {
 		ctx.JSON(nethttp.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -95,12 +99,14 @@ func (h *TrackHandler) Update(ctx *gin.Context) {
 
 	var req struct {
 		UserID         string     `json:"user_id" binding:"required"`
+		TrailID        *string    `json:"trail_id"`
 		Route          string     `json:"route" binding:"required"`
 		DistanceM      *float64   `json:"distance_m"`
 		ElevationGainM *float64   `json:"elevation_gain_m"`
 		ElevationLossM *float64   `json:"elevation_loss_m"`
 		StartedAt      *time.Time `json:"started_at"`
 		EndedAt        *time.Time `json:"ended_at"`
+		IsPrivate      bool       `json:"is_private"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(nethttp.StatusBadRequest, gin.H{"error": err.Error()})
@@ -110,12 +116,14 @@ func (h *TrackHandler) Update(ctx *gin.Context) {
 	t, err := h.service.Update(ctx.Request.Context(), track.Track{
 		ID:             id,
 		UserID:         req.UserID,
+		TrailID:        req.TrailID,
 		Route:          []byte(req.Route),
 		DistanceM:      req.DistanceM,
 		ElevationGainM: req.ElevationGainM,
 		ElevationLossM: req.ElevationLossM,
 		StartedAt:      req.StartedAt,
 		EndedAt:        req.EndedAt,
+		IsPrivate:      req.IsPrivate,
 	})
 	if err != nil {
 		ctx.JSON(nethttp.StatusInternalServerError, gin.H{"error": err.Error()})

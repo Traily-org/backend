@@ -36,7 +36,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id string) (user.User, err
 }
 
 func (r *UserRepository) Create(ctx context.Context, u user.User) (user.User, error) {
-	row := r.pool.QueryRow(ctx, createUserQuery, u.Email, u.Password, u.Name)
+	row := r.pool.QueryRow(ctx, createUserQuery, u.Email, u.Password, u.Name, u.Username, u.DisplayName, u.AvatarURL)
 
 	created, err := scanUser(row)
 	if isUniqueViolation(err) {
@@ -50,7 +50,7 @@ func (r *UserRepository) Create(ctx context.Context, u user.User) (user.User, er
 }
 
 func (r *UserRepository) Update(ctx context.Context, u user.User) (user.User, error) {
-	row := r.pool.QueryRow(ctx, updateUserQuery, u.ID, u.Email, u.Password, u.Name)
+	row := r.pool.QueryRow(ctx, updateUserQuery, u.ID, u.Email, u.Password, u.Name, u.Username, u.DisplayName, u.AvatarURL)
 
 	updated, err := scanUser(row)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -80,7 +80,7 @@ func (r *UserRepository) Delete(ctx context.Context, id string) error {
 
 func scanUser(row pgx.Row) (user.User, error) {
 	var u user.User
-	err := row.Scan(&u.ID, &u.Email, &u.Password, &u.Name, &u.CreatedAt, &u.UpdatedAt)
+	err := row.Scan(&u.ID, &u.Email, &u.Password, &u.Name, &u.Username, &u.DisplayName, &u.Role, &u.AvatarURL, &u.TotalPoints, &u.CreatedAt, &u.UpdatedAt)
 	return u, err
 }
 

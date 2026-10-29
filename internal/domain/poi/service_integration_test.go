@@ -5,55 +5,17 @@ package poi_test
 import (
 	"context"
 	"testing"
-	"time"
-
-	"github.com/testcontainers/testcontainers-go"
-	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/traily-org/server/internal/domain/poi"
 	"github.com/traily-org/server/internal/domain/user"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
-	"github.com/traily-org/server/migrations"
+	"github.com/traily-org/server/internal/testutil"
 )
 
-func newTestPOIService(t *testing.T) (*poi.Service, *user.Service, func()) {
+func newTestPOIService(t *testing.T) (*poi.Service, *user.Service) {
 	t.Helper()
 
-	ctx := context.Background()
-
-	container, err := tcpostgres.Run(ctx, "postgis/postgis:16-3.4-alpine",
-		tcpostgres.WithDatabase("traily"),
-		tcpostgres.WithUsername("traily"),
-		tcpostgres.WithPassword("traily"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(30*time.Second),
-		),
-	)
-	if err != nil {
-		t.Fatalf("failed to start postgres container: %v", err)
-	}
-
-	cleanup := func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Logf("failed to terminate postgres container: %v", err)
-		}
-	}
-
-	dsn, err := container.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatalf("failed to get connection string: %v", err)
-	}
-
-	pool, err := postgres.Connect(ctx, dsn)
-	if err != nil {
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-	t.Cleanup(func() { pool.Close() })
-
-	if err := migrations.Run(ctx, pool); err != nil {
-		t.Fatalf("failed to run migrations: %v", err)
-	}
+	pool := testutil.NewPool(t)
 
 	userRepo := postgres.NewUserRepository(pool)
 	userSvc := user.NewService(userRepo)
@@ -61,12 +23,11 @@ func newTestPOIService(t *testing.T) (*poi.Service, *user.Service, func()) {
 	poiRepo := postgres.NewPOIRepository(pool)
 	poiSvc := poi.NewService(poiRepo)
 
-	return poiSvc, userSvc, cleanup
+	return poiSvc, userSvc
 }
 
 func TestPOIService_CreateAndGet(t *testing.T) {
-	poiSvc, userSvc, cleanup := newTestPOIService(t)
-	defer cleanup()
+	poiSvc, userSvc := newTestPOIService(t)
 	ctx := context.Background()
 
 	usr, err := userSvc.Create(ctx, user.User{
@@ -99,8 +60,7 @@ func TestPOIService_CreateAndGet(t *testing.T) {
 }
 
 func TestPOIService_List(t *testing.T) {
-	poiSvc, userSvc, cleanup := newTestPOIService(t)
-	defer cleanup()
+	poiSvc, userSvc := newTestPOIService(t)
 	ctx := context.Background()
 
 	usr, _ := userSvc.Create(ctx, user.User{
@@ -133,8 +93,7 @@ func TestPOIService_List(t *testing.T) {
 }
 
 func TestPOIService_Delete(t *testing.T) {
-	poiSvc, userSvc, cleanup := newTestPOIService(t)
-	defer cleanup()
+	poiSvc, userSvc := newTestPOIService(t)
 	ctx := context.Background()
 
 	usr, _ := userSvc.Create(ctx, user.User{
