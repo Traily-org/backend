@@ -1,7 +1,9 @@
 CREATE TABLE protected_zones (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
+    category TEXT NOT NULL,
     description TEXT,
+    regulations TEXT,
     protection_level protection_level NOT NULL,
     area GEOMETRY(MultiPolygon, 4326) NOT NULL,
     source TEXT,
