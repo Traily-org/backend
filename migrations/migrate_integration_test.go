@@ -280,3 +280,26 @@ func TestRun_LegacyAppUserData_MergesIntoUsers(t *testing.T) {
 		t.Fatal("app_user still exists after migrations")
 	}
 }
+
+func TestRun_EmptyDatabase_CreatesSpeciesAndZoneDetails(t *testing.T) {
+	pool := testutil.NewPool(t)
+
+	columns := map[string][]string{
+		"species":         {"family", "ethical_advice"},
+		"protected_zones": {"category", "regulations"},
+	}
+	for table, names := range columns {
+		for _, name := range names {
+			var exists bool
+			if err := pool.QueryRow(context.Background(),
+				`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2)`,
+				table, name,
+			).Scan(&exists); err != nil {
+				t.Fatalf("check column %s.%s: %v", table, name, err)
+			}
+			if !exists {
+				t.Errorf("column %s.%s is missing", table, name)
+			}
+		}
+	}
+}

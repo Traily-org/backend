@@ -3,7 +3,9 @@ CREATE TABLE species (
     scientific_name TEXT NOT NULL UNIQUE,
     common_name TEXT NOT NULL,
     category species_category NOT NULL,
+    family TEXT,
     description TEXT,
+    ethical_advice TEXT,
     protection_level protection_level NOT NULL DEFAULT 'none',
     rarity rarity_level NOT NULL DEFAULT 'common',
     observation_months SMALLINT[]
