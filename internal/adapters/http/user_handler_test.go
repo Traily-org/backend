@@ -207,6 +207,18 @@ func TestUserHandler_Create_InvalidPayload_Returns400(t *testing.T) {
 	}
 }
 
+func TestUserHandler_Create_PasswordTooLong_Returns400(t *testing.T) {
+	svc := &fakeUserService{createFn: func(context.Context, user.User) (user.User, error) {
+		return user.User{}, user.ErrPasswordTooLong
+	}}
+
+	// 40 characters, 80 bytes: passes the binding, rejected by the domain.
+	rec, env := serve(t, svc, nethttp.MethodPost, "/api/v1/users",
+		`{"email":"alice@example.com","password":"`+strings.Repeat("é", 40)+`","name":"Alice"}`)
+
+	assertError(t, rec, env, nethttp.StatusBadRequest, "VALIDATION_ERROR", "password must be at most 72 bytes")
+}
+
 func TestUserHandler_Create_EmailTaken_Returns409(t *testing.T) {
 	svc := &fakeUserService{createFn: func(context.Context, user.User) (user.User, error) {
 		return user.User{}, user.ErrEmailTaken

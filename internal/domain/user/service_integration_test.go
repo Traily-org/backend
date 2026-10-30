@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/traily-org/server/internal/domain/user"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
 	"github.com/traily-org/server/internal/testutil"
@@ -122,4 +124,50 @@ func TestService_Delete_NotFound(t *testing.T) {
 	if err != user.ErrNotFound {
 		t.Fatalf("Delete() error = %v, want %v", err, user.ErrNotFound)
 	}
+}
+
+func TestService_Create_StoresBcryptHash(t *testing.T) {
+	pool := testutil.NewPool(t)
+	service := user.NewService(postgres.NewUserRepository(pool))
+	ctx := context.Background()
+
+	created, err := service.Create(ctx, user.User{Email: "erin@example.com", Password: "supersecret", Name: "Erin"})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	if stored := storedPassword(t, pool, created.ID); !user.CheckPassword(stored, "supersecret") {
+		t.Fatalf("stored password %q is not a bcrypt hash of the plain password", stored)
+	}
+}
+
+func TestService_Update_EmptyPassword_KeepsStoredHash(t *testing.T) {
+	pool := testutil.NewPool(t)
+	service := user.NewService(postgres.NewUserRepository(pool))
+	ctx := context.Background()
+
+	created, err := service.Create(ctx, user.User{Email: "frank@example.com", Password: "supersecret", Name: "Frank"})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	before := storedPassword(t, pool, created.ID)
+
+	created.Name = "Frank Updated"
+	if _, err := service.Update(ctx, created); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+
+	if after := storedPassword(t, pool, created.ID); after != before {
+		t.Fatalf("stored password changed on update without password: %q -> %q", before, after)
+	}
+}
+
+func storedPassword(t *testing.T, pool *pgxpool.Pool, id string) string {
+	t.Helper()
+
+	var password string
+	if err := pool.QueryRow(context.Background(), "SELECT password FROM users WHERE id = $1", id).Scan(&password); err != nil {
+		t.Fatalf("read stored password: %v", err)
+	}
+	return password
 }
