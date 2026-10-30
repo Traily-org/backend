@@ -5,6 +5,9 @@ import _ "embed"
 //go:embed queries/get_user.sql
 var getUserQuery string
 
+//go:embed queries/get_user_by_email.sql
+var getUserByEmailQuery string
+
 //go:embed queries/create_user.sql
 var createUserQuery string
 
