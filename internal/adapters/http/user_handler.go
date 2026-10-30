@@ -2,14 +2,15 @@ package http
 
 import (
 	"context"
-	"errors"
 	nethttp "net/http"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/traily-org/server/internal/adapters/http/response"
 	"github.com/traily-org/server/internal/domain/user"
 )
 
+// userService is the subset of the user domain service used by UserHandler.
 type userService interface {
 	Get(ctx context.Context, id string) (user.User, error)
 	Create(ctx context.Context, u user.User) (user.User, error)
@@ -17,30 +18,32 @@ type userService interface {
 	Delete(ctx context.Context, id string) error
 }
 
+// UserHandler serves the /users endpoints.
 type UserHandler struct {
 	service userService
 }
 
+// NewUserHandler returns a UserHandler backed by service.
 func NewUserHandler(service userService) *UserHandler {
 	return &UserHandler{service: service}
 }
 
+// Get handles GET /users/:id.
 func (h *UserHandler) Get(ctx *gin.Context) {
-	id := ctx.Param("id")
-
-	u, err := h.service.Get(ctx.Request.Context(), id)
+	u, err := h.service.Get(ctx.Request.Context(), ctx.Param("id"))
 	if err != nil {
-		writeUserError(ctx, err)
+		response.Error(ctx, err)
 		return
 	}
 
-	ctx.JSON(nethttp.StatusOK, newUserResponse(u))
+	response.JSON(ctx, nethttp.StatusOK, newUserResponse(u))
 }
 
+// Create handles POST /users.
 func (h *UserHandler) Create(ctx *gin.Context) {
 	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(nethttp.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BindError(ctx, err)
 		return
 	}
 
@@ -50,54 +53,41 @@ func (h *UserHandler) Create(ctx *gin.Context) {
 		Name:     req.Name,
 	})
 	if err != nil {
-		writeUserError(ctx, err)
+		response.Error(ctx, err)
 		return
 	}
 
-	ctx.JSON(nethttp.StatusCreated, newUserResponse(u))
+	response.JSON(ctx, nethttp.StatusCreated, newUserResponse(u))
 }
 
+// Update handles PUT /users/:id. An empty password keeps the current one.
 func (h *UserHandler) Update(ctx *gin.Context) {
-	id := ctx.Param("id")
-
 	var req updateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(nethttp.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BindError(ctx, err)
 		return
 	}
 
 	u, err := h.service.Update(ctx.Request.Context(), user.User{
-		ID:       id,
+		ID:       ctx.Param("id"),
 		Email:    req.Email,
 		Password: req.Password,
 		Name:     req.Name,
 	})
 	if err != nil {
-		writeUserError(ctx, err)
+		response.Error(ctx, err)
 		return
 	}
 
-	ctx.JSON(nethttp.StatusOK, newUserResponse(u))
+	response.JSON(ctx, nethttp.StatusOK, newUserResponse(u))
 }
 
+// Delete handles DELETE /users/:id.
 func (h *UserHandler) Delete(ctx *gin.Context) {
-	id := ctx.Param("id")
-
-	if err := h.service.Delete(ctx.Request.Context(), id); err != nil {
-		writeUserError(ctx, err)
+	if err := h.service.Delete(ctx.Request.Context(), ctx.Param("id")); err != nil {
+		response.Error(ctx, err)
 		return
 	}
 
-	ctx.Status(nethttp.StatusNoContent)
-}
-
-func writeUserError(ctx *gin.Context, err error) {
-	switch {
-	case errors.Is(err, user.ErrNotFound):
-		ctx.JSON(nethttp.StatusNotFound, gin.H{"error": err.Error()})
-	case errors.Is(err, user.ErrEmailTaken):
-		ctx.JSON(nethttp.StatusConflict, gin.H{"error": err.Error()})
-	default:
-		ctx.JSON(nethttp.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
+	response.NoContent(ctx)
 }
