@@ -7,6 +7,7 @@ import (
 
 	"github.com/traily-org/server/internal/adapters/http"
 	"github.com/traily-org/server/internal/config"
+	"github.com/traily-org/server/internal/domain/trail"
 	"github.com/traily-org/server/internal/domain/user"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
 	"github.com/traily-org/server/migrations"
@@ -30,7 +31,11 @@ func main() {
 	userService := user.NewService(userRepository)
 	userHandler := http.NewUserHandler(userService)
 
-	server := http.NewServer(userHandler)
+	trailRepository := postgres.NewTrailRepository(pool)
+	trailService := trail.NewService(trailRepository)
+	trailHandler := http.NewTrailHandler(trailService)
+
+	server := http.NewServer(userHandler, trailHandler)
 
 	if err := server.Run(cfg.Port); err != nil {
 		log.Fatalf("server stopped: %v", err)

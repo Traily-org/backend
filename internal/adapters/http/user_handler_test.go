@@ -60,7 +60,7 @@ var (
 func serve(t *testing.T, svc *fakeUserService, method, path, body string) (*httptest.ResponseRecorder, envelope) {
 	t.Helper()
 
-	server := NewServer(NewUserHandler(svc))
+	server := NewServer(NewUserHandler(svc), NewTrailHandler(&fakeTrailService{}))
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")
