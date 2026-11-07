@@ -16,12 +16,13 @@ const codeMethodNotAllowed apperror.Code = "METHOD_NOT_ALLOWED"
 
 // Server is the HTTP server of the API.
 type Server struct {
-	router      *gin.Engine
-	userHandler *UserHandler
+	router       *gin.Engine
+	userHandler  *UserHandler
+	trailHandler *TrailHandler
 }
 
 // NewServer builds a Server with its middlewares and routes registered.
-func NewServer(userHandler *UserHandler) *Server {
+func NewServer(userHandler *UserHandler, trailHandler *TrailHandler) *Server {
 	router := gin.New()
 	router.HandleMethodNotAllowed = true
 	router.Use(gin.Logger(), recovery())
@@ -33,8 +34,9 @@ func NewServer(userHandler *UserHandler) *Server {
 	})
 
 	s := &Server{
-		router:      router,
-		userHandler: userHandler,
+		router:       router,
+		userHandler:  userHandler,
+		trailHandler: trailHandler,
 	}
 	s.registerRoutes()
 	return s
@@ -58,6 +60,10 @@ func (s *Server) registerRoutes() {
 	v1.POST("/users", s.userHandler.Create)
 	v1.PUT("/users/:id", s.userHandler.Update)
 	v1.DELETE("/users/:id", s.userHandler.Delete)
+
+	v1.GET("/trails", s.trailHandler.ListByUser)
+	v1.POST("/trails", s.trailHandler.Create)
+	v1.GET("/trails/:id", s.trailHandler.Get)
 }
 
 // recovery returns a middleware that turns panics into a 500 response using
