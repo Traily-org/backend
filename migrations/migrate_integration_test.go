@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -301,5 +302,71 @@ func TestRun_EmptyDatabase_CreatesSpeciesAndZoneDetails(t *testing.T) {
 				t.Errorf("column %s.%s is missing", table, name)
 			}
 		}
+	}
+}
+
+// applyBefore applies, in order, every migration whose name sorts before
+// limit and records it as applied, like Run would.
+func applyBefore(t *testing.T, pool *pgxpool.Pool, limit string) {
+	t.Helper()
+	ctx := context.Background()
+
+	names, err := filepath.Glob("*.sql")
+	if err != nil {
+		t.Fatalf("glob migrations: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `CREATE TABLE schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())`); err != nil {
+		t.Fatalf("create schema_migrations: %v", err)
+	}
+	for _, name := range names {
+		if name >= limit {
+			continue
+		}
+		content, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatalf("read %s: %v", name, err)
+		}
+		if _, err := pool.Exec(ctx, string(content)); err != nil {
+			t.Fatalf("apply %s: %v", name, err)
+		}
+		if _, err := pool.Exec(ctx, `INSERT INTO schema_migrations (version) VALUES ($1)`, name); err != nil {
+			t.Fatalf("record %s: %v", name, err)
+		}
+	}
+}
+
+func TestRun_EmailsDifferingByCase_FailsWithExplicitMessage(t *testing.T) {
+	pool := testutil.NewEmptyDatabase(t)
+	ctx := context.Background()
+	applyBefore(t, pool, "027")
+
+	if _, err := pool.Exec(ctx, `INSERT INTO users (email, password, name) VALUES ('Ann@example.com', 'h', 'Ann'), ('ann@example.com', 'h', 'Ann 2')`); err != nil {
+		t.Fatalf("seed users: %v", err)
+	}
+
+	err := migrations.Run(ctx, pool)
+	if err == nil || !strings.Contains(err.Error(), "merged first: ann@example.com") {
+		t.Fatalf("Run() error = %v, want the duplicate email to be reported", err)
+	}
+}
+
+func TestRun_MixedCaseEmail_IsLowercased(t *testing.T) {
+	pool := testutil.NewEmptyDatabase(t)
+	ctx := context.Background()
+	applyBefore(t, pool, "027")
+
+	if _, err := pool.Exec(ctx, `INSERT INTO users (email, password, name) VALUES (' Bob@Example.com', 'h', 'Bob')`); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+	if err := migrations.Run(ctx, pool); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	var email string
+	if err := pool.QueryRow(ctx, `SELECT email FROM users`).Scan(&email); err != nil {
+		t.Fatalf("read email: %v", err)
+	}
+	if email != "bob@example.com" {
+		t.Fatalf("email = %q, want %q", email, "bob@example.com")
 	}
 }
