@@ -59,6 +59,13 @@ task docker:dev
 Ça build et lance l'API (avec hot-reload via `air`), une base PostgreSQL et un Adminer. L'API
 est disponible sur `http://localhost:8080` et Adminer sur `http://localhost:8081`.
 
+### Documentation de l'API
+
+Les endpoints sont décrits en OpenAPI 3.1 dans
+`internal/adapters/http/openapi.yaml`, servi par l'API sur
+`GET /api/v1/openapi.yaml`. Un test vérifie que la spec documente exactement les
+routes enregistrées : toute nouvelle route doit y être ajoutée.
+
 ### Migrations
 
 Le schéma est décrit dans `migrations/`. Pour l'appliquer sur la base de dev :
