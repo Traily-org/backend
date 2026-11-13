@@ -94,6 +94,8 @@ func (s *Server) registerRoutes() {
 
 	d := s.deps
 
+	v1.GET("/openapi.yaml", serveOpenAPISpec)
+
 	authGroup := v1.Group("/auth")
 	authGroup.POST("/register", orNext(d.AuthRateLimit), d.Auth.Register)
 	authGroup.POST("/login", orNext(d.AuthRateLimit), d.Auth.Login)
