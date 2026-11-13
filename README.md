@@ -50,6 +50,18 @@ Copier le fichier d'exemple puis l'ajuster si besoin :
 cp .env.example .env
 ```
 
+Renseigner ensuite `JWT_SECRET` et `JWT_REFRESH_SECRET`, laissés vides dans l'exemple. Ce
+sont deux chaînes aléatoires à générer soi-même : l'API refuse de démarrer si l'une fait
+moins de 32 octets ou si les deux sont identiques. Lancer cette commande une fois pour
+chaque variable :
+
+```sh
+openssl rand -hex 32
+```
+
+Ces valeurs restent dans `.env`, qui n'est pas versionné. Les changer invalide les tokens
+déjà émis.
+
 ### Lancer en dev
 
 ```sh
