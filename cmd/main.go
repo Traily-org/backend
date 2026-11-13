@@ -10,6 +10,7 @@ import (
 	"github.com/traily-org/server/internal/adapters/http/middleware"
 	"github.com/traily-org/server/internal/auth"
 	"github.com/traily-org/server/internal/config"
+	"github.com/traily-org/server/internal/domain/ban"
 	"github.com/traily-org/server/internal/domain/user"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
 	"github.com/traily-org/server/migrations"
@@ -51,10 +52,17 @@ func main() {
 	})
 	userService.SetSessionRevoker(authService)
 
+	banService := ban.NewService(postgres.NewBanRepository(pool), userService)
+	banService.SetSessionRevoker(authService)
+	authService.SetBanChecker(banService)
+
 	server, err := http.NewServer(http.Deps{
 		Users:            http.NewUserHandler(userService),
 		Auth:             http.NewAuthHandler(authService),
+		Moderation:       http.NewModerationHandler(banService),
 		Authenticate:     middleware.Authenticate(authService),
+		RejectBanned:     middleware.RejectBanned(banService),
+		RequireModerator: middleware.RequireRole(user.RoleModerator, user.RoleAdmin),
 		AuthRateLimit:    middleware.RateLimit(authRateLimitRequests, rateLimitWindow),
 		SessionRateLimit: middleware.RateLimit(sessionRateLimitRequests, rateLimitWindow),
 		TrustedProxies:   cfg.TrustedProxies,

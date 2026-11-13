@@ -15,8 +15,17 @@ import (
 type Service struct {
 	users  UserStore
 	tokens RefreshTokenRepository
+	bans   BanChecker
 	cfg    Config
 	now    func() time.Time
+}
+
+// SetBanChecker registers the checker that refuses banned accounts and email
+// addresses on register, login and refresh. It is set after construction
+// because the ban service itself revokes sessions through this service.
+// Without it, no ban is checked.
+func (s *Service) SetBanChecker(b BanChecker) {
+	s.bans = b
 }
 
 // NewService returns a Service issuing tokens with cfg.
@@ -30,8 +39,15 @@ func NewService(users UserStore, tokens RefreshTokenRepository, cfg Config) *Ser
 }
 
 // Register creates u through the user store and returns the created user with
-// a new token pair. Errors from the user store are returned unchanged.
+// a new token pair. A banned email address is refused with the error of the
+// ban checker. Errors from the user store are returned unchanged.
 func (s *Service) Register(ctx context.Context, u user.User) (user.User, TokenPair, error) {
+	if s.bans != nil {
+		if err := s.bans.CheckEmail(ctx, u.Email); err != nil {
+			return user.User{}, TokenPair{}, err
+		}
+	}
+
 	created, err := s.users.Create(ctx, u)
 	if err != nil {
 		return user.User{}, TokenPair{}, err
@@ -45,10 +61,16 @@ func (s *Service) Register(ctx context.Context, u user.User) (user.User, TokenPa
 }
 
 // Login checks the credentials through the user store and returns the user
-// with a new token pair. Errors from the user store are returned unchanged.
+// with a new token pair. A banned account is refused with the error of the
+// ban checker, only once the password is known to be right, so that the ban
+// does not reveal that the account exists. Errors from the user store are
+// returned unchanged.
 func (s *Service) Login(ctx context.Context, email, password string) (user.User, TokenPair, error) {
 	u, err := s.users.Authenticate(ctx, email, password)
 	if err != nil {
+		return user.User{}, TokenPair{}, err
+	}
+	if err := s.checkBan(ctx, u.ID); err != nil {
 		return user.User{}, TokenPair{}, err
 	}
 
@@ -63,7 +85,8 @@ func (s *Service) Login(ctx context.Context, email, password string) (user.User,
 // presented one (rotation). It returns ErrInvalidRefreshToken when the token is
 // unknown, expired or belongs to a deleted user. Presenting a token that was
 // already revoked is treated as a theft: every token of its owner is revoked
-// and ErrInvalidRefreshToken is returned.
+// and ErrInvalidRefreshToken is returned. A banned user gets the error of the
+// ban checker, and the presented token stays revoked.
 func (s *Service) Refresh(ctx context.Context, refreshToken string) (TokenPair, error) {
 	if refreshToken == "" {
 		return TokenPair{}, ErrInvalidRefreshToken
@@ -102,8 +125,22 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (TokenPair, 
 	if err != nil {
 		return TokenPair{}, err
 	}
+	// The presented token is already revoked: a banned user leaves without
+	// any usable refresh token.
+	if err := s.checkBan(ctx, u.ID); err != nil {
+		return TokenPair{}, err
+	}
 
 	return s.issuePair(ctx, u)
+}
+
+// checkBan returns the ban checker's error for userID, or nil when no checker
+// is set.
+func (s *Service) checkBan(ctx context.Context, userID string) error {
+	if s.bans == nil {
+		return nil
+	}
+	return s.bans.CheckUser(ctx, userID)
 }
 
 // Logout revokes the given refresh token. It is idempotent: an empty, unknown
