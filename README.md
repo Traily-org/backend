@@ -50,6 +50,18 @@ Copier le fichier d'exemple puis l'ajuster si besoin :
 cp .env.example .env
 ```
 
+Renseigner ensuite `JWT_SECRET` et `JWT_REFRESH_SECRET`, laissés vides dans l'exemple. Ce
+sont deux chaînes aléatoires à générer soi-même : l'API refuse de démarrer si l'une fait
+moins de 32 octets ou si les deux sont identiques. Lancer cette commande une fois pour
+chaque variable :
+
+```sh
+openssl rand -hex 32
+```
+
+Ces valeurs restent dans `.env`, qui n'est pas versionné. Les changer invalide les tokens
+déjà émis.
+
 ### Lancer en dev
 
 ```sh
@@ -61,10 +73,29 @@ est disponible sur `http://localhost:8080` et Adminer sur `http://localhost:8081
 
 ### Migrations
 
-Le schéma est décrit dans `migrations/`. Pour l'appliquer sur la base de dev :
+Le schéma est décrit par les fichiers SQL numérotés de `migrations/`. L'API les applique
+elle-même au démarrage, dans l'ordre, et note chaque fichier passé dans la table
+`schema_migrations` : seuls les nouveaux fichiers sont joués. Chaque fichier tourne dans
+une transaction, et une erreur arrête le démarrage.
+
+Pour les lancer à la main sans démarrer l'API :
 
 ```sh
-docker compose exec -T db psql -U $DB_USER -d $DB_NAME < migrations/001_create_users.sql
+task docker:migrate   # dans le conteneur de dev
+task migrate          # en local, sans Docker
+```
+
+Pour modifier le schéma, ajouter un nouveau fichier avec le numéro suivant
+(`NNN_description.sql`) au lieu de modifier un fichier déjà appliqué : il ne serait pas rejoué.
+
+Si la base de dev a été créée avec d'anciennes migrations et que le démarrage échoue
+(par exemple `type "..." already exists`), repartir d'une base vide. Cela efface toutes
+ses données :
+
+```sh
+docker compose stop db && docker compose rm -f db
+docker volume rm backend_db-data
+docker compose up -d db
 ```
 
 ### Sans Docker
