@@ -38,12 +38,24 @@ type ModerationRoutes interface {
 	LiftBan(c *gin.Context)
 }
 
+// ReportRoutes are the report endpoints: POST /reports for signed-in users
+// and GET /moderation/reports for moderators.
+type ReportRoutes interface {
+	Create(c *gin.Context)
+	List(c *gin.Context)
+}
+
 // Deps are the handlers and middlewares the server is built from.
 type Deps struct {
 	Users UserRoutes
 	Auth  AuthRoutes
 	// Moderation serves /moderation. Nil leaves those routes out.
 	Moderation ModerationRoutes
+	// Reports serves POST /reports and GET /moderation/reports. Nil leaves
+	// those routes out.
+	Reports ReportRoutes
+	// ReportRateLimit throttles POST /reports. Nil means no limit.
+	ReportRateLimit gin.HandlerFunc
 	// Authenticate rejects requests without a valid access token.
 	Authenticate gin.HandlerFunc
 	// RejectBanned runs after Authenticate on every authenticated route but
@@ -75,9 +87,10 @@ type Server struct {
 // It fails if a trusted proxy is not a valid IP or CIDR, or if moderation
 // routes are given without their guards.
 func NewServer(deps Deps) (*Server, error) {
-	if deps.Moderation != nil && (deps.Authenticate == nil || deps.RequireModerator == nil) {
-		// Fail closed: the moderation routes must never be served unguarded.
-		return nil, errors.New("moderation routes need Authenticate and RequireModerator")
+	if (deps.Moderation != nil || deps.Reports != nil) && (deps.Authenticate == nil || deps.RequireModerator == nil) {
+		// Fail closed: the moderation and report routes must never be served
+		// unguarded.
+		return nil, errors.New("moderation and report routes need Authenticate and RequireModerator")
 	}
 
 	router := gin.New()
@@ -133,11 +146,21 @@ func (s *Server) registerRoutes() {
 	activeUsers.PUT("/me", d.Users.UpdateMe)
 	activeUsers.GET("/:id", d.Users.Get)
 
-	if d.Moderation != nil {
+	if d.Reports != nil {
+		reports := v1.Group("/reports", d.Authenticate, orNext(d.RejectBanned), orNext(d.ReportRateLimit))
+		reports.POST("", d.Reports.Create)
+	}
+
+	if d.Moderation != nil || d.Reports != nil {
 		moderation := v1.Group("/moderation", d.Authenticate, orNext(d.RejectBanned), d.RequireModerator)
-		moderation.POST("/users/:id/ban", d.Moderation.BanUser)
-		moderation.GET("/users/:id/ban", d.Moderation.GetBan)
-		moderation.DELETE("/users/:id/ban", d.Moderation.LiftBan)
+		if d.Moderation != nil {
+			moderation.POST("/users/:id/ban", d.Moderation.BanUser)
+			moderation.GET("/users/:id/ban", d.Moderation.GetBan)
+			moderation.DELETE("/users/:id/ban", d.Moderation.LiftBan)
+		}
+		if d.Reports != nil {
+			moderation.GET("/reports", d.Reports.List)
+		}
 	}
 }
 
