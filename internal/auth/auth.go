@@ -68,6 +68,14 @@ type UserStore interface {
 	Get(ctx context.Context, id string) (user.User, error)
 }
 
+// BanChecker tells whether an account or an email address is banned. Both
+// methods return nil when it is not, and the error to give back to the client
+// when it is. It is implemented by the ban service.
+type BanChecker interface {
+	CheckUser(ctx context.Context, userID string) error
+	CheckEmail(ctx context.Context, email string) error
+}
+
 // RefreshTokenRepository persists refresh tokens.
 type RefreshTokenRepository interface {
 	// Create stores t and returns it with its generated ID and CreatedAt.

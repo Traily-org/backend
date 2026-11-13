@@ -22,6 +22,9 @@ const (
 	CodeNotFound Code = "NOT_FOUND"
 	// CodeConflict reports a conflict with the current state of a resource.
 	CodeConflict Code = "CONFLICT"
+	// CodeAccountBanned reports an account or an email address that is banned.
+	// The message tells until when, so that clients can show it.
+	CodeAccountBanned Code = "ACCOUNT_BANNED"
 	// CodeRateLimited reports a caller that exceeded its rate limit.
 	CodeRateLimited Code = "RATE_LIMITED"
 	// CodeInternal reports an unexpected server-side failure.
@@ -101,7 +104,7 @@ func HTTPStatus(code Code) int {
 		return nethttp.StatusBadRequest
 	case CodeUnauthorized:
 		return nethttp.StatusUnauthorized
-	case CodeForbidden:
+	case CodeForbidden, CodeAccountBanned:
 		return nethttp.StatusForbidden
 	case CodeNotFound:
 		return nethttp.StatusNotFound
