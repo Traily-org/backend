@@ -35,6 +35,16 @@ tasks:
     cmds:
       - docker compose exec api go run ./cmd/migrate
 
+  seed:
+    desc: fill the dev database with sample accounts, content and reports (idempotent)
+    cmds:
+      - go run ./cmd/seed
+
+  docker:seed:
+    desc: fill the dev database with sample data inside the dev container
+    cmds:
+      - docker compose exec api go run ./cmd/seed
+
   docker:dev:
     desc: run traily's api in dev mode, removing containers on stop
     cmds:
