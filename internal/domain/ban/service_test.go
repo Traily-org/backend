@@ -13,7 +13,7 @@ import (
 
 // fakeRepo is an in-memory Repository.
 type fakeRepo struct {
-	reports     map[string]Report
+	reports     map[string]ReportRef
 	bans        []Ban
 	identifiers map[string]Identifier
 	createErr   error
@@ -22,23 +22,23 @@ type fakeRepo struct {
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{
 		identifiers: map[string]Identifier{},
-		reports: map[string]Report{
-			"rep-1":         {ID: "rep-1", TargetUserID: strPtr("user-1"), Status: ReportPending},
-			"rep-mod2":      {ID: "rep-mod2", TargetUserID: strPtr("mod-2"), Status: ReportPending},
-			"rep-admin":     {ID: "rep-admin", TargetUserID: strPtr("admin-1"), Status: ReportPending},
-			"rep-reviewed":  {ID: "rep-reviewed", TargetUserID: strPtr("user-1"), Status: ReportReviewed},
-			"rep-dismissed": {ID: "rep-dismissed", TargetUserID: strPtr("user-1"), Status: ReportDismissed},
-			"rep-gone":      {ID: "rep-gone", Status: ReportPending},
+		reports: map[string]ReportRef{
+			"rep-1":         {ID: "rep-1", TargetUserID: strPtr("user-1")},
+			"rep-mod2":      {ID: "rep-mod2", TargetUserID: strPtr("mod-2")},
+			"rep-admin":     {ID: "rep-admin", TargetUserID: strPtr("admin-1")},
+			"rep-reviewed":  {ID: "rep-reviewed", TargetUserID: strPtr("user-1")},
+			"rep-dismissed": {ID: "rep-dismissed", TargetUserID: strPtr("user-1"), Dismissed: true},
+			"rep-gone":      {ID: "rep-gone"},
 		},
 	}
 }
 
 func strPtr(s string) *string { return &s }
 
-func (f *fakeRepo) Report(_ context.Context, id string) (Report, error) {
+func (f *fakeRepo) Report(_ context.Context, id string) (ReportRef, error) {
 	r, ok := f.reports[id]
 	if !ok {
-		return Report{}, ErrReportNotFound
+		return ReportRef{}, ErrReportNotFound
 	}
 	return r, nil
 }
