@@ -139,8 +139,8 @@ func TestBanRepository_Report_ResolvesTargetUser(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Report() error = %v", err)
 			}
-			if got.ID != id || got.Status != ban.ReportPending {
-				t.Errorf("Report() = %+v, want id %s and pending", got, id)
+			if got.ID != id || got.Dismissed {
+				t.Errorf("Report() = %+v, want id %s and not dismissed", got, id)
 			}
 			if (got.TargetUserID == nil) != (tt.want == nil) || (got.TargetUserID != nil && *got.TargetUserID != *tt.want) {
 				t.Errorf("TargetUserID = %v, want %v", got.TargetUserID, tt.want)

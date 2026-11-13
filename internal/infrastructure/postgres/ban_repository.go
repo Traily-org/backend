@@ -23,7 +23,7 @@ const (
 				WHEN 'observation' THEN (SELECT o.user_id FROM observations o WHERE o.id = r.target_id)
 				WHEN 'trail' THEN (SELECT t.user_id FROM trails t WHERE t.id = r.target_id)
 			END::text,
-			r.status::text
+			r.status = 'dismissed'
 		FROM reports r
 		WHERE r.id = $1`
 
@@ -97,14 +97,12 @@ func NewBanRepository(pool *pgxpool.Pool) *BanRepository {
 
 // Report returns the report identified by id with the user it concerns, or
 // ban.ErrReportNotFound.
-func (r *BanRepository) Report(ctx context.Context, id string) (ban.Report, error) {
-	var rep ban.Report
-	var status string
-	err := r.pool.QueryRow(ctx, getReportQuery, id).Scan(&rep.ID, &rep.TargetUserID, &status)
+func (r *BanRepository) Report(ctx context.Context, id string) (ban.ReportRef, error) {
+	var rep ban.ReportRef
+	err := r.pool.QueryRow(ctx, getReportQuery, id).Scan(&rep.ID, &rep.TargetUserID, &rep.Dismissed)
 	if err != nil {
-		return ban.Report{}, mapError(err, ban.ErrReportNotFound)
+		return ban.ReportRef{}, mapError(err, ban.ErrReportNotFound)
 	}
-	rep.Status = ban.ReportStatus(status)
 	return rep, nil
 }
 
