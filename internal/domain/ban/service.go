@@ -91,7 +91,7 @@ func (s *Service) Ban(ctx context.Context, in Input) (Ban, error) {
 	if report.TargetUserID == nil || *report.TargetUserID != in.UserID {
 		return Ban{}, ErrReportNotAboutUser
 	}
-	if report.Status == ReportDismissed {
+	if report.Dismissed {
 		return Ban{}, ErrReportDismissed
 	}
 
