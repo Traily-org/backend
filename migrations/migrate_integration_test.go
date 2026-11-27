@@ -4,11 +4,13 @@ package migrations_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/traily-org/server/internal/testutil"
@@ -371,5 +373,63 @@ func TestRun_MixedCaseEmail_IsLowercased(t *testing.T) {
 	}
 	if email != "bob@example.com" {
 		t.Fatalf("email = %q, want %q", email, "bob@example.com")
+	}
+}
+
+func TestTeamMembers_UniqueUser_RejectsSecondTeam(t *testing.T) {
+	pool := testutil.NewPool(t)
+	ctx := context.Background()
+	userID := testutil.CreateUser(t, pool)
+
+	var teamA, teamB string
+	if err := pool.QueryRow(ctx, `INSERT INTO teams (name) VALUES ('Team Alpha') RETURNING id::text`).Scan(&teamA); err != nil {
+		t.Fatalf("insert team A: %v", err)
+	}
+	if err := pool.QueryRow(ctx, `INSERT INTO teams (name) VALUES ('Team Beta') RETURNING id::text`).Scan(&teamB); err != nil {
+		t.Fatalf("insert team B: %v", err)
+	}
+
+	if _, err := pool.Exec(ctx, `INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)`, teamA, userID); err != nil {
+		t.Fatalf("join team A: %v", err)
+	}
+
+	_, err := pool.Exec(ctx, `INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)`, teamB, userID)
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
+		t.Fatalf("second team insert error = %v, want unique violation (23505)", err)
+	}
+
+	if _, err := pool.Exec(ctx, `DELETE FROM team_members WHERE team_id = $1 AND user_id = $2`, teamA, userID); err != nil {
+		t.Fatalf("leave team A: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)`, teamB, userID); err != nil {
+		t.Fatalf("join team B after leaving team A: %v", err)
+	}
+
+	if tableExists(t, pool, "idx_team_members_user") {
+		t.Error("redundant index idx_team_members_user should have been dropped")
+	}
+}
+
+func TestRun_UserInMultipleTeams_FailsWithExplicitMessage(t *testing.T) {
+	pool := testutil.NewEmptyDatabase(t)
+	ctx := context.Background()
+	applyBefore(t, pool, "031")
+
+	userID := testutil.CreateUser(t, pool)
+	var teamA, teamB string
+	if err := pool.QueryRow(ctx, `INSERT INTO teams (name) VALUES ('Team One') RETURNING id::text`).Scan(&teamA); err != nil {
+		t.Fatalf("insert team A: %v", err)
+	}
+	if err := pool.QueryRow(ctx, `INSERT INTO teams (name) VALUES ('Team Two') RETURNING id::text`).Scan(&teamB); err != nil {
+		t.Fatalf("insert team B: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO team_members (team_id, user_id) VALUES ($1, $3), ($2, $3)`, teamA, teamB, userID); err != nil {
+		t.Fatalf("seed multi-team memberships: %v", err)
+	}
+
+	err := migrations.Run(ctx, pool)
+	if err == nil || !strings.Contains(err.Error(), "users belonging to multiple teams must be resolved first: "+userID) {
+		t.Fatalf("Run() error = %v, want duplicate user_id to be reported", err)
 	}
 }
