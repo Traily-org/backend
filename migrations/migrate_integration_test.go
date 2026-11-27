@@ -77,7 +77,10 @@ func TestRun_EmptyDatabase_AppliesAllMigrations(t *testing.T) {
 			t.Errorf("table %s should exist", table)
 		}
 	}
-	for _, table := range []string{"app_user", "track"} {
+	for _, table := range []string{
+		"app_user", "track", "trace", "activity", "publication", "poi",
+		"trace_poi", "activity_poi", "herbier", "plant_species", "herbier_entry",
+	} {
 		if tableExists(t, pool, table) {
 			t.Errorf("table %s should have been removed or renamed", table)
 		}
