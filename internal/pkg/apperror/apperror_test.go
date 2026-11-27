@@ -89,6 +89,7 @@ func TestHTTPStatus_EveryCode_ReturnsMappedStatus(t *testing.T) {
 		{apperror.CodeValidation, nethttp.StatusBadRequest},
 		{apperror.CodeUnauthorized, nethttp.StatusUnauthorized},
 		{apperror.CodeForbidden, nethttp.StatusForbidden},
+		{apperror.CodeAccountBanned, nethttp.StatusForbidden},
 		{apperror.CodeNotFound, nethttp.StatusNotFound},
 		{apperror.CodeConflict, nethttp.StatusConflict},
 		{apperror.CodeRateLimited, nethttp.StatusTooManyRequests},

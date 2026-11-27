@@ -71,7 +71,7 @@ func TestRun_EmptyDatabase_AppliesAllMigrations(t *testing.T) {
 		"users", "trail_sessions", "trails", "waypoints", "refresh_tokens",
 		"species", "photos", "observations", "user_points", "badges",
 		"user_badges", "teams", "team_members", "protected_zones", "reports",
-		"moderation_logs",
+		"moderation_logs", "user_bans", "banned_identifiers",
 	} {
 		if !tableExists(t, pool, table) {
 			t.Errorf("table %s should exist", table)

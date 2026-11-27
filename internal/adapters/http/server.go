@@ -2,6 +2,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	nethttp "net/http"
 
@@ -30,12 +31,28 @@ type AuthRoutes interface {
 	Logout(c *gin.Context)
 }
 
+// ModerationRoutes are the /moderation endpoints.
+type ModerationRoutes interface {
+	BanUser(c *gin.Context)
+	GetBan(c *gin.Context)
+	LiftBan(c *gin.Context)
+}
+
 // Deps are the handlers and middlewares the server is built from.
 type Deps struct {
 	Users UserRoutes
 	Auth  AuthRoutes
+	// Moderation serves /moderation. Nil leaves those routes out.
+	Moderation ModerationRoutes
 	// Authenticate rejects requests without a valid access token.
 	Authenticate gin.HandlerFunc
+	// RejectBanned runs after Authenticate on every authenticated route but
+	// DELETE /users/me and rejects banned users, whose access tokens are
+	// still signed. Nil checks no ban.
+	RejectBanned gin.HandlerFunc
+	// RequireModerator rejects authenticated users who are neither moderator
+	// nor admin. It guards /moderation and must be set with Moderation.
+	RequireModerator gin.HandlerFunc
 	// AuthRateLimit throttles /auth/register and /auth/login, the endpoints
 	// exposed to credential guessing.
 	AuthRateLimit gin.HandlerFunc
@@ -55,8 +72,14 @@ type Server struct {
 }
 
 // NewServer builds a Server with its middlewares and routes registered.
-// It fails if a trusted proxy is not a valid IP or CIDR.
+// It fails if a trusted proxy is not a valid IP or CIDR, or if moderation
+// routes are given without their guards.
 func NewServer(deps Deps) (*Server, error) {
+	if deps.Moderation != nil && (deps.Authenticate == nil || deps.RequireModerator == nil) {
+		// Fail closed: the moderation routes must never be served unguarded.
+		return nil, errors.New("moderation routes need Authenticate and RequireModerator")
+	}
+
 	router := gin.New()
 	if err := router.SetTrustedProxies(deps.TrustedProxies); err != nil {
 		return nil, fmt.Errorf("set trusted proxies: %w", err)
@@ -101,10 +124,21 @@ func (s *Server) registerRoutes() {
 	authGroup.POST("/logout", orNext(d.SessionRateLimit), d.Auth.Logout)
 
 	users := v1.Group("/users", d.Authenticate)
-	users.GET("/me", d.Users.GetMe)
-	users.PUT("/me", d.Users.UpdateMe)
+	// A banned user can still delete their account (right to erasure). Their
+	// email stays banned, so this does not let them sign up again.
 	users.DELETE("/me", d.Users.DeleteMe)
-	users.GET("/:id", d.Users.Get)
+
+	activeUsers := users.Group("", orNext(d.RejectBanned))
+	activeUsers.GET("/me", d.Users.GetMe)
+	activeUsers.PUT("/me", d.Users.UpdateMe)
+	activeUsers.GET("/:id", d.Users.Get)
+
+	if d.Moderation != nil {
+		moderation := v1.Group("/moderation", d.Authenticate, orNext(d.RejectBanned), d.RequireModerator)
+		moderation.POST("/users/:id/ban", d.Moderation.BanUser)
+		moderation.GET("/users/:id/ban", d.Moderation.GetBan)
+		moderation.DELETE("/users/:id/ban", d.Moderation.LiftBan)
+	}
 }
 
 // recovery returns a middleware that turns panics into a 500 response using
