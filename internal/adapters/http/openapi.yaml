@@ -1,0 +1,559 @@
+openapi: 3.1.0
+info:
+  title: Traily API
+  version: 1.0.0
+  description: |
+    REST API of Traily.
+
+    Successful responses carrying data are wrapped in `{"data": ...}`. Errors
+    are wrapped in `{"error": {"code": ..., "message": ...}}`, where `code` is
+    a stable machine-readable identifier and `message` is safe to display.
+    Every date is in UTC (RFC 3339).
+
+    Protected endpoints expect an `Authorization: Bearer <access_token>`
+    header. Access tokens are short-lived JWTs (15 minutes by default);
+    exchange the refresh token on `POST /auth/refresh` to get a new pair.
+servers:
+  - url: /api/v1
+tags:
+  - name: auth
+    description: Account creation and session management.
+  - name: users
+    description: User profiles.
+  - name: meta
+    description: API description.
+security:
+  - bearerAuth: []
+
+paths:
+  /openapi.yaml:
+    get:
+      tags: [meta]
+      operationId: getOpenAPISpec
+      summary: Get this OpenAPI document
+      security: []
+      responses:
+        "200":
+          description: The OpenAPI document of the API.
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /auth/register:
+    post:
+      tags: [auth]
+      operationId: register
+      summary: Create an account
+      description: |
+        Creates an account and opens a session. The email is trimmed and
+        lowercased before being stored. Rate limited to 10 requests per minute
+        per client IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Account created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Log in
+      description: |
+        Checks the credentials and opens a session. An unknown email and a
+        wrong password give the same error. Rate limited to 10 requests per
+        minute per client IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      operationId: refresh
+      summary: Refresh the tokens
+      description: |
+        Exchanges a refresh token for a new token pair. The presented refresh
+        token is revoked (rotation). Presenting an already used refresh token
+        revokes every session of the user. Rate limited to 60 requests per
+        minute per client IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: New token pair.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RefreshResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: Log out
+      description: |
+        Revokes the given refresh token. Idempotent: an unknown or already
+        revoked token also succeeds. Rate limited to 60 requests per minute
+        per client IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "204":
+          description: Logged out.
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /users/me:
+    get:
+      tags: [users]
+      operationId: getMe
+      summary: Get my profile
+      description: Returns the full profile of the authenticated user.
+      responses:
+        "200":
+          description: Profile of the authenticated user.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      tags: [users]
+      operationId: updateMe
+      summary: Replace my profile
+      description: |
+        Replaces the profile of the authenticated user. Omitted optional
+        fields are cleared, except `password`, which keeps the current
+        password when omitted. Changing the email or the password requires
+        `current_password`. Changing the password revokes every session of
+        the user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`current_password` is incorrect."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+              example:
+                error:
+                  code: FORBIDDEN
+                  message: current password is incorrect
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags: [users]
+      operationId: deleteMe
+      summary: Delete my account
+      description: Deletes the authenticated user.
+      responses:
+        "204":
+          description: Account deleted.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /users/{id}:
+    get:
+      tags: [users]
+      operationId: getUser
+      summary: Get a public profile
+      description: |
+        Returns the public profile of a user, without private fields such as
+        the email or the role.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Public profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PublicUser"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          description: At most 72 bytes once UTF-8 encoded.
+        name:
+          type: string
+          minLength: 1
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          minLength: 1
+
+    UpdateUserRequest:
+      type: object
+      required: [email, name]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          description: New password. Omit to keep the current one.
+        current_password:
+          type: string
+          maxLength: 72
+          description: Required to change the email or the password.
+        name:
+          type: string
+          minLength: 1
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: "^[A-Za-z0-9_.-]+$"
+        display_name:
+          type: string
+          maxLength: 100
+        avatar_url:
+          type: string
+          format: uri
+
+    User:
+      type: object
+      description: |
+        Full profile of a user, only shown to the user themselves. Optional
+        fields are omitted when unset.
+      required: [id, email, name, role, total_points, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        username:
+          type: string
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        role:
+          $ref: "#/components/schemas/Role"
+        total_points:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PublicUser:
+      type: object
+      description: |
+        Profile of a user as shown to other users. Optional fields are omitted
+        when unset.
+      required: [id, total_points, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        total_points:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Role:
+      type: string
+      enum: [user, moderator, admin]
+
+    Tokens:
+      type: object
+      required: [access_token, access_expires_at, refresh_token, refresh_expires_at, token_type]
+      properties:
+        access_token:
+          type: string
+          description: JWT to send in the `Authorization` header.
+        access_expires_at:
+          type: string
+          format: date-time
+        refresh_token:
+          type: string
+          description: Opaque token to send to `/auth/refresh` and `/auth/logout`.
+        refresh_expires_at:
+          type: string
+          format: date-time
+        token_type:
+          type: string
+          const: Bearer
+
+    AuthResponse:
+      type: object
+      required: [user, tokens]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        tokens:
+          $ref: "#/components/schemas/Tokens"
+
+    RefreshResponse:
+      type: object
+      required: [tokens]
+      properties:
+        tokens:
+          $ref: "#/components/schemas/Tokens"
+
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - UNAUTHORIZED
+        - FORBIDDEN
+        - NOT_FOUND
+        - METHOD_NOT_ALLOWED
+        - CONFLICT
+        - RATE_LIMITED
+        - INTERNAL_ERROR
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              $ref: "#/components/schemas/ErrorCode"
+            message:
+              type: string
+
+  responses:
+    ValidationError:
+      description: The request is invalid (body, parameter or value).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: "email: must be a valid email"
+    Unauthorized:
+      description: Authentication is missing or invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: authentication required
+    NotFound:
+      description: The resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: NOT_FOUND
+              message: user not found
+    Conflict:
+      description: The email or the username is already taken.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: CONFLICT
+              message: email already taken
+    RateLimited:
+      description: Too many requests from this client IP.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: RATE_LIMITED
+              message: too many requests
+    InternalError:
+      description: Unexpected server error. No detail is exposed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: internal server error
