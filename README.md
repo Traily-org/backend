@@ -98,6 +98,27 @@ docker volume rm backend_db-data
 docker compose up -d db
 ```
 
+### Données de démo (seeder)
+
+Pour remplir la base de dev avec des comptes (`admin`, `moderator`, `alice`, `bob`,
+`charlie` en `@traily.dev`), une photo, un parcours et des signalements à traiter
+dans le dashboard :
+
+```sh
+task docker:seed
+```
+
+Le mot de passe de ces comptes est la constante `Password` de `internal/seed/seed.go`.
+La commande est idempotente (on peut la relancer) et refuse de tourner si
+`APP_ENV=production`.
+
+### Signalements
+
+- `POST /api/v1/reports` : un utilisateur connecté signale une photo, une
+  observation, un parcours ou un utilisateur (`target_type`, `target_id`, `reason`).
+- `GET /api/v1/moderation/reports` : liste pour le dashboard (modérateur ou admin),
+  filtres `status`, `target_type`, pagination `limit`/`offset`.
+
 ### Sans Docker
 
 ```sh

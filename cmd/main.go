@@ -11,6 +11,7 @@ import (
 	"github.com/traily-org/server/internal/auth"
 	"github.com/traily-org/server/internal/config"
 	"github.com/traily-org/server/internal/domain/ban"
+	"github.com/traily-org/server/internal/domain/report"
 	"github.com/traily-org/server/internal/domain/user"
 	"github.com/traily-org/server/internal/infrastructure/postgres"
 	"github.com/traily-org/server/migrations"
@@ -22,6 +23,7 @@ import (
 const (
 	authRateLimitRequests    = 10
 	sessionRateLimitRequests = 60
+	reportRateLimitRequests  = 20
 	rateLimitWindow          = time.Minute
 )
 
@@ -56,10 +58,14 @@ func main() {
 	banService.SetSessionRevoker(authService)
 	authService.SetBanChecker(banService)
 
+	reportService := report.NewService(postgres.NewReportRepository(pool))
+
 	server, err := http.NewServer(http.Deps{
 		Users:            http.NewUserHandler(userService),
 		Auth:             http.NewAuthHandler(authService),
 		Moderation:       http.NewModerationHandler(banService),
+		Reports:          http.NewReportHandler(reportService),
+		ReportRateLimit:  middleware.RateLimit(reportRateLimitRequests, rateLimitWindow),
 		Authenticate:     middleware.Authenticate(authService),
 		RejectBanned:     middleware.RejectBanned(banService),
 		RequireModerator: middleware.RequireRole(user.RoleModerator, user.RoleAdmin),
